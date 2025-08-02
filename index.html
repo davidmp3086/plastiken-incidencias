@@ -1,4 +1,4 @@
-```html
+  ```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -73,12 +73,24 @@
             border: none;
             transition: all 0.2s;
         }
+        .download-btn {
+            background: #3b82f6;
+            color: white;
+        }
+        .download-btn:hover {
+            background: #2563eb;
+        }
         .delete-btn {
             background: #ef4444;
             color: white;
         }
         .delete-btn:hover {
             background: #dc2626;
+        }
+        .user-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -115,14 +127,16 @@
             images: [],
             pendingUsers: [],
             productionCategories: [...db.productionCategories],
-            warehouseCategories: [...db.warehouseCategories]
+            warehouseCategories: [...db.warehouseCategories],
+            newProductionCategory: '',
+            newWarehouseCategory: ''
         };
 
         // Componentes
         function render() {
             const app = document.getElementById('app');
             app.innerHTML = getComponent(state.currentPage);
-            setTimeout(addEventListeners, 100); // Añadir un pequeño retraso para asegurar que los elementos están cargados
+            addEventListeners();
         }
 
         function getComponent(page) {
@@ -352,7 +366,7 @@
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <h4 class="text-lg font-semibold text-gray-800 mb-3">Usuarios Pendientes</h4>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-3">Usuarios</h4>
                                 <button id="manageUsersBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
                                     <i class="fas fa-users mr-2"></i> Gestionar Usuarios
                                 </button>
@@ -484,6 +498,8 @@
         }
 
         function getAdminComponent() {
+            const allUsers = [...db.users, ...db.pendingUsers];
+            
             return `
             <div class="min-h-screen bg-gray-50">
                 <!-- Header -->
@@ -510,22 +526,26 @@
                 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div class="mb-8">
                         <h2 class="text-2xl font-bold text-gray-900 mb-2">Gestión de Usuarios</h2>
-                        <p class="text-gray-600">Aprobar o rechazar solicitudes de registro</p>
+                        <p class="text-gray-600">Gestiona todos los usuarios del sistema</p>
                     </div>
 
-                    ${db.pendingUsers.length > 0 ? `
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    ${allUsers.length > 0 ? `
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+                        <div class="px-6 py-3 bg-gray-50 border-b">
+                            <h3 class="text-lg font-semibold text-gray-900">Todos los Usuarios</h3>
+                        </div>
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departamento</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                ${db.pendingUsers.map(user => `
+                                ${allUsers.map(user => `
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
@@ -543,15 +563,22 @@
                                             ${user.department === 'production' ? 'Producción' : 'Almacén'}
                                         </span>
                                     </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                            ${user.approved ? 'Aprobado' : 'Pendiente'}
+                                        </span>
+                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         ${new Date(user.createdAt).toLocaleDateString()}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        ${!user.approved ? `
                                         <button class="text-green-600 hover:text-green-900 mr-4 approve-user" data-email="${user.email}">
                                             <i class="fas fa-check mr-1"></i> Aprobar
                                         </button>
-                                        <button class="text-red-600 hover:text-red-900 reject-user" data-email="${user.email}">
-                                            <i class="fas fa-times mr-1"></i> Rechazar
+                                        ` : ''}
+                                        <button class="text-red-600 hover:text-red-900 delete-user" data-email="${user.email}">
+                                            <i class="fas fa-trash mr-1"></i> Eliminar
                                         </button>
                                     </td>
                                 </tr>
@@ -560,15 +587,15 @@
                         </table>
                     </div>
                     ` : `
-                    <div class="bg-white rounded-xl p-12 text-center shadow-lg">
+                    <div class="bg-white rounded-xl p-12 text-center shadow-lg mb-8">
                         <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay usuarios pendientes</h3>
-                        <p class="text-gray-600">Actualmente no hay solicitudes de registro pendientes de aprobación.</p>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay usuarios registrados</h3>
+                        <p class="text-gray-600">Aún no se han registrado usuarios en el sistema.</p>
                     </div>
                     `}
 
                     <!-- Category Management -->
-                    <div class="mt-8 bg-white rounded-xl p-6 shadow-lg">
+                    <div class="bg-white rounded-xl p-6 shadow-lg">
                         <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                             <i class="fas fa-cog mr-3 text-blue-600"></i> Gestión de Categorías
                         </h3>
@@ -594,7 +621,7 @@
                                     <input type="text" id="newProductionCategory" 
                                            class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                            placeholder="Nueva categoría...">
-                                    <button id="addProductionCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg transition-colors">
+                                    <button id="addProductionCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 transition-colors">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
@@ -620,11 +647,17 @@
                                     <input type="text" id="newWarehouseCategory" 
                                            class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                            placeholder="Nueva categoría...">
-                                    <button id="addWarehouseCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg transition-colors">
+                                    <button id="addWarehouseCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 transition-colors">
                                         <i class="fas fa-plus"></i>
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button id="saveCategories" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                                <i class="fas fa-save mr-2"></i> Guardar Categorías
+                            </button>
                         </div>
                     </div>
                 </main>
@@ -659,7 +692,7 @@
                 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div class="mb-8">
                         <h2 class="text-2xl font-bold text-gray-900 mb-2">Historial de Incidencias</h2>
-                        <p class="text-gray-600">Visualiza y elimina las incidencias reportadas</p>
+                        <p class="text-gray-600">Visualiza, descarga y elimina las incidencias reportadas</p>
                     </div>
 
                     ${db.incidents.length > 0 ? `
@@ -699,7 +732,10 @@
                             </div>
                             
                             <div class="incident-actions">
-                                <button class="action-btn delete-btn" data-id="${incident.id}" onclick="deleteIncident(${incident.id})">
+                                <button class="action-btn download-btn" data-id="${incident.id}">
+                                    <i class="fas fa-download mr-1"></i> Descargar
+                                </button>
+                                <button class="action-btn delete-btn" data-id="${incident.id}">
                                     <i class="fas fa-trash mr-1"></i> Eliminar
                                 </button>
                             </div>
@@ -717,21 +753,6 @@
             </div>
             `;
         }
-
-        // Función global para eliminar incidencias
-        window.deleteIncident = function(incidentId) {
-            if (confirm('¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer.')) {
-                const initialLength = db.incidents.length;
-                db.incidents = db.incidents.filter(i => i.id != incidentId);
-                
-                if (db.incidents.length < initialLength) {
-                    alert('Incidencia eliminada correctamente');
-                    render();
-                } else {
-                    alert('No se pudo eliminar la incidencia');
-                }
-            }
-        };
 
         // Event Listeners
         function addEventListeners() {
@@ -980,26 +1001,32 @@
                 });
             }
 
-            // Approve/reject users
+            // Approve user
             document.querySelectorAll('.approve-user').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const email = e.currentTarget.getAttribute('data-email');
-                    const user = db.pendingUsers.find(u => u.email === email);
-                    if (user) {
-                        db.users.push({ ...user, approved: true });
+                    const user = [...db.pendingUsers, ...db.users].find(u => u.email === email);
+                    if (user && !user.approved) {
+                        // Move from pending to approved users
                         db.pendingUsers = db.pendingUsers.filter(u => u.email !== email);
+                        db.users.push({ ...user, approved: true });
                         alert('Usuario aprobado correctamente');
                         render();
                     }
                 });
             });
 
-            document.querySelectorAll('.reject-user').forEach(btn => {
+            // Delete user
+            document.querySelectorAll('.delete-user').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     const email = e.currentTarget.getAttribute('data-email');
-                    db.pendingUsers = db.pendingUsers.filter(u => u.email !== email);
-                    alert('Usuario rechazado');
-                    render();
+                    if (confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
+                        // Remove from both arrays
+                        db.users = db.users.filter(u => u.email !== email);
+                        db.pendingUsers = db.pendingUsers.filter(u => u.email !== email);
+                        alert('Usuario eliminado correctamente');
+                        render();
+                    }
                 });
             });
 
@@ -1018,6 +1045,7 @@
                 });
             });
 
+            // Add production category
             const addProductionCategory = document.getElementById('addProductionCategory');
             if (addProductionCategory) {
                 addProductionCategory.addEventListener('click', () => {
@@ -1027,10 +1055,13 @@
                         state.productionCategories.push(value);
                         input.value = '';
                         render();
+                    } else if (value && state.productionCategories.includes(value)) {
+                        alert('Esta categoría ya existe');
                     }
                 });
             }
 
+            // Add warehouse category
             const addWarehouseCategory = document.getElementById('addWarehouseCategory');
             if (addWarehouseCategory) {
                 addWarehouseCategory.addEventListener('click', () => {
@@ -1040,8 +1071,81 @@
                         state.warehouseCategories.push(value);
                         input.value = '';
                         render();
+                    } else if (value && state.warehouseCategories.includes(value)) {
+                        alert('Esta categoría ya existe');
                     }
                 });
+            }
+
+            // Save categories
+            const saveCategories = document.getElementById('saveCategories');
+            if (saveCategories) {
+                saveCategories.addEventListener('click', () => {
+                    // Update the original categories
+                    db.productionCategories = [...state.productionCategories];
+                    db.warehouseCategories = [...state.warehouseCategories];
+                    alert('Categorías guardadas correctamente');
+                });
+            }
+
+            // Download incident
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const incidentId = this.getAttribute('data-id');
+                    downloadIncident(incidentId);
+                });
+            });
+
+            // Delete incident
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const incidentId = this.getAttribute('data-id');
+                    deleteIncident(incidentId);
+                });
+            });
+        }
+
+        // Functions for download and delete
+        function downloadIncident(incidentId) {
+            const incident = db.incidents.find(i => i.id == incidentId);
+            if (!incident) return;
+
+            // Create content for download
+            let content = `INFORME DE INCIDENCIA\n`;
+            content += `===================\n\n`;
+            content += `Fecha: ${new Date(incident.date).toLocaleDateString()} ${new Date(incident.date).toLocaleTimeString()}\n`;
+            content += `Departamento: ${incident.department === 'production' ? 'Producción' : 'Almacén'}\n`;
+            content += `Categoría: ${incident.category}\n`;
+            content += `Operario que reporta: ${incident.operator}\n`;
+            content += `Reportado por: ${incident.reportedBy.firstName} ${incident.reportedBy.lastName}\n\n`;
+            content += `Descripción:\n${incident.description}\n\n`;
+            content += `Número de imágenes adjuntas: ${incident.images.length}`;
+
+            // Create blob and download
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `incidencia_${incidentId}_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            alert('Incidencia descargada correctamente');
+        }
+
+        function deleteIncident(incidentId) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer.')) {
+                const initialLength = db.incidents.length;
+                db.incidents = db.incidents.filter(i => i.id != incidentId);
+                
+                if (db.incidents.length < initialLength) {
+                    alert('Incidencia eliminada correctamente');
+                    render();
+                } else {
+                    alert('No se pudo eliminar la incidencia');
+                }
             }
         }
 
@@ -1101,7 +1205,8 @@
                 email,
                 department,
                 password,
-                createdAt: new Date()
+                createdAt: new Date(),
+                approved: false
             };
 
             db.pendingUsers.push(newUser);
@@ -1183,3 +1288,4 @@
     </script>
 </body>
 </html>
+```

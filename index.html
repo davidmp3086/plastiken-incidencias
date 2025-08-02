@@ -92,14 +92,6 @@
             gap: 8px;
             margin-top: 8px;
         }
-        .realtime-badge {
-            background: #10b981;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin-left: 8px;
-        }
         .sync-icon {
             animation: pulse 2s infinite;
         }
@@ -108,14 +100,29 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+        .notification-badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #ef4444;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div id="app"></div>
 
     <script>
-        // Simulación de base de datos en "la nube"
-        const cloudDB = {
+        // Base de datos centralizada (simulación de servidor)
+        const serverDB = {
             users: [],
             pendingUsers: [],
             adminPassword: '1865',
@@ -128,7 +135,7 @@
                 'Ausentismo', 'Otras incidencias'
             ],
             incidents: [],
-            lastSync: new Date().toISOString()
+            lastUpdate: new Date().toISOString()
         };
 
         // Estado local de la aplicación
@@ -142,61 +149,67 @@
             description: '',
             operator: '',
             images: [],
-            productionCategories: [...cloudDB.productionCategories],
-            warehouseCategories: [...cloudDB.warehouseCategories],
-            newProductionCategory: '',
-            newWarehouseCategory: ''
+            productionCategories: [...serverDB.productionCategories],
+            warehouseCategories: [...serverDB.warehouseCategories],
+            pendingUserCount: 0
         };
 
-        // Simulación de sincronización con el servidor
+        // Función para sincronizar con el servidor
         function syncWithServer() {
-            // Simular latencia de red
-            setTimeout(() => {
-                // Actualizar datos locales con los del "servidor"
-                state.productionCategories = [...cloudDB.productionCategories];
-                state.warehouseCategories = [...cloudDB.warehouseCategories];
-                console.log('Sincronización completa con el servidor');
-            }, 300);
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    // Actualizar datos locales con los del servidor
+                    state.productionCategories = [...serverDB.productionCategories];
+                    state.warehouseCategories = [...serverDB.warehouseCategories];
+                    
+                    // Contar usuarios pendientes para notificación
+                    state.pendingUserCount = serverDB.pendingUsers.length;
+                    
+                    console.log('Sincronización completa con el servidor');
+                    resolve();
+                }, 300);
+            });
         }
 
         // Función para enviar datos al servidor
         function sendToServer(dataType, data) {
-            // Simular envío al servidor
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    // Aquí iría la lógica real de envío al servidor
                     console.log(`Datos enviados al servidor (${dataType}):`, data);
                     
-                    // Actualizar la base de datos simulada
+                    // Actualizar la base de datos del servidor según el tipo de dato
                     switch(dataType) {
                         case 'incident':
-                            cloudDB.incidents.push(data);
+                            serverDB.incidents.push(data);
                             break;
                         case 'user':
-                            cloudDB.pendingUsers.push(data);
-                            break;
-                        case 'categories':
-                            cloudDB.productionCategories = [...data.production];
-                            cloudDB.warehouseCategories = [...data.warehouse];
+                            serverDB.pendingUsers.push(data);
                             break;
                         case 'approveUser':
-                            const user = cloudDB.pendingUsers.find(u => u.email === data.email);
+                            const user = serverDB.pendingUsers.find(u => u.email === data.email);
                             if (user) {
-                                cloudDB.users.push({...user, approved: true});
-                                cloudDB.pendingUsers = cloudDB.pendingUsers.filter(u => u.email !== data.email);
+                                serverDB.users.push({...user, approved: true});
+                                serverDB.pendingUsers = serverDB.pendingUsers.filter(u => u.email !== data.email);
                             }
                             break;
+                        case 'rejectUser':
+                            serverDB.pendingUsers = serverDB.pendingUsers.filter(u => u.email !== data.email);
+                            break;
                         case 'deleteUser':
-                            cloudDB.users = cloudDB.users.filter(u => u.email !== data.email);
-                            cloudDB.pendingUsers = cloudDB.pendingUsers.filter(u => u.email !== data.email);
+                            serverDB.users = serverDB.users.filter(u => u.email !== data.email);
+                            serverDB.pendingUsers = serverDB.pendingUsers.filter(u => u.email !== data.email);
                             break;
                         case 'deleteIncident':
-                            cloudDB.incidents = cloudDB.incidents.filter(i => i.id != data.id);
+                            serverDB.incidents = serverDB.incidents.filter(i => i.id != data.id);
+                            break;
+                        case 'categories':
+                            serverDB.productionCategories = [...data.production];
+                            serverDB.warehouseCategories = [...data.warehouse];
                             break;
                     }
                     
-                    // Actualizar la marca de tiempo de sincronización
-                    cloudDB.lastSync = new Date().toISOString();
+                    // Actualizar marca de tiempo
+                    serverDB.lastUpdate = new Date().toISOString();
                     resolve(true);
                 }, 500);
             });
@@ -223,6 +236,8 @@
                     return getAdminComponent();
                 case 'viewIncidents':
                     return getViewIncidentsComponent();
+                case 'pendingUsers':
+                    return getPendingUsersComponent();
                 default:
                     return getLoginComponent();
             }
@@ -240,7 +255,7 @@
                         <p class="text-xl text-gray-600 mt-2">Plastiken</p>
                         <div class="flex items-center justify-center mt-4">
                             <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
-                            <span class="text-sm text-green-600">Sincronización en tiempo real</span>
+                            <span class="text-sm text-green-600">Sistema en la nube</span>
                         </div>
                     </div>
                     
@@ -298,7 +313,7 @@
                         <p class="text-xl text-gray-600 mt-2">Crea tu cuenta en Plastiken</p>
                         <div class="flex items-center justify-center mt-4">
                             <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
-                            <span class="text-sm text-green-600">Sincronización en tiempo real</span>
+                            <span class="text-sm text-green-600">Todos los datos se guardan en la nube</span>
                         </div>
                     </div>
                     
@@ -396,7 +411,7 @@
                             <div class="flex items-center space-x-4">
                                 <div class="flex items-center">
                                     <i class="fas fa-sync-alt sync-icon mr-1 text-green-500"></i>
-                                    <span class="text-sm text-green-600 realtime-badge">En línea</span>
+                                    <span class="text-sm text-green-600">En línea</span>
                                 </div>
                                 <span class="text-sm text-gray-600">Hola, ${state.currentUser.firstName}</span>
                                 <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
@@ -413,8 +428,8 @@
                         <h2 class="text-3xl font-bold text-gray-900 mb-2">Bienvenido al Portal de Incidencias</h2>
                         <p class="text-gray-600">Selecciona el departamento para reportar una incidencia</p>
                         <div class="flex items-center justify-center mt-4">
-                            <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
-                            <span class="text-sm text-green-600">Datos sincronizados en tiempo real</span>
+                            <i class="fas fa-cloud-upload-alt mr-2 text-blue-500"></i>
+                            <span class="text-sm text-blue-600">Todos los datos se guardan automáticamente en la nube</span>
                         </div>
                     </div>
 
@@ -450,9 +465,12 @@
                         <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
                             <i class="fas fa-cog mr-3 text-blue-600"></i> Panel de Administración
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             <div>
-                                <h4 class="text-lg font-semibold text-gray-800 mb-3">Usuarios</h4>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                    <i class="fas fa-users mr-2"></i> Usuarios
+                                    ${state.pendingUserCount > 0 ? `<span class="notification-badge">${state.pendingUserCount}</span>` : ''}
+                                </h4>
                                 <button id="manageUsersBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
                                     <i class="fas fa-users mr-2"></i> Gestionar Usuarios
                                 </button>
@@ -461,6 +479,12 @@
                                 <h4 class="text-lg font-semibold text-gray-800 mb-3">Gestionar Incidencias</h4>
                                 <button id="viewIncidentsBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors">
                                     <i class="fas fa-list mr-2"></i> Ver Incidencias
+                                </button>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-3">Categorías</h4>
+                                <button id="manageCategoriesBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-tags mr-2"></i> Gestionar Categorías
                                 </button>
                             </div>
                         </div>
@@ -492,7 +516,7 @@
                                 <h1 class="text-lg font-semibold text-gray-900">Reportar Incidencia</h1>
                             </div>
                             <div class="flex items-center">
-                                <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
+                                <i class="fas fa-cloud-upload-alt mr-2 text-blue-500"></i>
                                 <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors">
                                     <i class="fas fa-sign-out-alt mr-1"></i> Salir
                                 </button>
@@ -511,8 +535,8 @@
                             <h2 class="text-2xl font-bold text-gray-900">Reportar Incidencia - ${state.selectedDepartment === 'production' ? 'Producción' : 'Almacén'}</h2>
                             <p class="text-gray-600 mt-2">Por favor, completa todos los campos</p>
                             <div class="flex items-center justify-center mt-4">
-                                <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
-                                <span class="text-sm text-green-600">Datos sincronizados en tiempo real</span>
+                                <i class="fas fa-cloud-upload-alt mr-2 text-blue-500"></i>
+                                <span class="text-sm text-blue-600">La incidencia se guardará automáticamente en la nube</span>
                             </div>
                         </div>
 
@@ -590,9 +614,7 @@
             `;
         }
 
-        function getAdminComponent() {
-            const allUsers = [...cloudDB.users, ...cloudDB.pendingUsers];
-            
+        function getPendingUsersComponent() {
             return `
             <div class="min-h-screen bg-gray-50">
                 <!-- Header -->
@@ -600,13 +622,13 @@
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="flex justify-between items-center h-16">
                             <div class="flex items-center">
-                                <button id="backToDashboardAdmin" class="mr-4 text-gray-600 hover:text-gray-800">
+                                <button id="backToAdmin" class="mr-4 text-gray-600 hover:text-gray-800">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
                                 <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3">
-                                    <i class="fas fa-cog text-white text-sm"></i>
+                                    <i class="fas fa-users text-white text-sm"></i>
                                 </div>
-                                <h1 class="text-lg font-semibold text-gray-900">Panel de Administración</h1>
+                                <h1 class="text-lg font-semibold text-gray-900">Usuarios Pendientes</h1>
                             </div>
                             <div class="flex items-center">
                                 <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
@@ -622,32 +644,28 @@
                 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                     <div class="flex justify-between items-center mb-8">
                         <div>
-                            <h2 class="text-2xl font-bold text-gray-900">Gestión de Usuarios</h2>
-                            <p class="text-gray-600">Gestiona todos los usuarios del sistema</p>
+                            <h2 class="text-2xl font-bold text-gray-900">Usuarios Pendientes de Aprobación</h2>
+                            <p class="text-gray-600">Aprobar o rechazar solicitudes de registro</p>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
-                            <span class="text-sm text-green-600">Sincronizado: ${new Date(cloudDB.lastSync).toLocaleTimeString()}</span>
+                            <span class="text-sm text-green-600">Sincronizado: ${new Date(serverDB.lastUpdate).toLocaleTimeString()}</span>
                         </div>
                     </div>
 
-                    ${allUsers.length > 0 ? `
-                    <div class="bg-white rounded-xl shadow-lg overflow-hidden mb-8">
-                        <div class="px-6 py-3 bg-gray-50 border-b">
-                            <h3 class="text-lg font-semibold text-gray-900">Todos los Usuarios</h3>
-                        </div>
+                    ${serverDB.pendingUsers.length > 0 ? `
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departamento</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                ${allUsers.map(user => `
+                                ${serverDB.pendingUsers.map(user => `
                                 <tr>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
@@ -665,22 +683,15 @@
                                             ${user.department === 'production' ? 'Producción' : 'Almacén'}
                                         </span>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.approved ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
-                                            ${user.approved ? 'Aprobado' : 'Pendiente'}
-                                        </span>
-                                    </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         ${new Date(user.createdAt).toLocaleDateString()}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                        ${!user.approved ? `
                                         <button class="text-green-600 hover:text-green-900 mr-4 approve-user" data-email="${user.email}">
                                             <i class="fas fa-check mr-1"></i> Aprobar
                                         </button>
-                                        ` : ''}
-                                        <button class="text-red-600 hover:text-red-900 delete-user" data-email="${user.email}">
-                                            <i class="fas fa-trash mr-1"></i> Eliminar
+                                        <button class="text-red-600 hover:text-red-900 reject-user" data-email="${user.email}">
+                                            <i class="fas fa-times mr-1"></i> Rechazar
                                         </button>
                                     </td>
                                 </tr>
@@ -689,91 +700,18 @@
                         </table>
                     </div>
                     ` : `
-                    <div class="bg-white rounded-xl p-12 text-center shadow-lg mb-8">
+                    <div class="bg-white rounded-xl p-12 text-center shadow-lg">
                         <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay usuarios registrados</h3>
-                        <p class="text-gray-600">Aún no se han registrado usuarios en el sistema.</p>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay usuarios pendientes</h3>
+                        <p class="text-gray-600">Actualmente no hay solicitudes de registro pendientes de aprobación.</p>
                     </div>
                     `}
-
-                    <!-- Category Management -->
-                    <div class="bg-white rounded-xl p-6 shadow-lg">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-2xl font-bold text-gray-900 flex items-center">
-                                <i class="fas fa-cog mr-3 text-blue-600"></i> Gestión de Categorías
-                            </h3>
-                            <div class="flex items-center">
-                                <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
-                                <span class="text-sm text-green-600">Sincronizado</span>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <!-- Production Categories -->
-                            <div>
-                                <h4 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                    <i class="fas fa-industry mr-2 text-orange-500"></i> Producción
-                                </h4>
-                                <div class="space-y-3 mb-4">
-                                    ${state.productionCategories.map((cat, index) => `
-                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                            <span class="text-gray-700">${cat}</span>
-                                            <button class="text-red-500 hover:text-red-700 remove-category" 
-                                                    data-type="production" data-index="${index}">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                <div class="flex">
-                                    <input type="text" id="newProductionCategory" 
-                                           class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                           placeholder="Nueva categoría...">
-                                    <button id="addProductionCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 transition-colors">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- Warehouse Categories -->
-                            <div>
-                                <h4 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                                    <i class="fas fa-warehouse mr-2 text-green-500"></i> Almacén
-                                </h4>
-                                <div class="space-y-3 mb-4">
-                                    ${state.warehouseCategories.map((cat, index) => `
-                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                            <span class="text-gray-700">${cat}</span>
-                                            <button class="text-red-500 hover:text-red-700 remove-category" 
-                                                    data-type="warehouse" data-index="${index}">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                                <div class="flex">
-                                    <input type="text" id="newWarehouseCategory" 
-                                           class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                           placeholder="Nueva categoría...">
-                                    <button id="addWarehouseCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 transition-colors">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mt-6">
-                            <button id="saveCategories" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
-                                <i class="fas fa-save mr-2"></i> Guardar Categorías
-                            </button>
-                        </div>
-                    </div>
                 </main>
             </div>
             `;
         }
 
-        function getViewIncidentsComponent() {
+        function getAdminComponent() {
             return `
             <div class="min-h-screen bg-gray-50">
                 <!-- Header -->
@@ -781,7 +719,7 @@
                     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div class="flex justify-between items-center h-16">
                             <div class="flex items-center">
-                                <button id="backToDashboardIncidents" class="mr-4 text-gray-600 hover:text-gray-800">
+                                <button id="backToAdminDashboard" class="mr-4 text-gray-600 hover:text-gray-800">
                                     <i class="fas fa-arrow-left"></i>
                                 </button>
                                 <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3">
@@ -804,18 +742,18 @@
                     <div class="flex justify-between items-center mb-8">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-900">Historial de Incidencias</h2>
-                            <p class="text-gray-600">Visualiza, descarga y elimina las incidencias reportadas</p>
+                            <p class="text-gray-600">Visualiza todas las incidencias reportadas</p>
                         </div>
                         <div class="flex items-center">
                             <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
-                            <span class="text-sm text-green-600">Sincronizado: ${new Date(cloudDB.lastSync).toLocaleTimeString()}</span>
+                            <span class="text-sm text-green-600">Sincronizado: ${new Date(serverDB.lastUpdate).toLocaleTimeString()}</span>
                         </div>
                     </div>
 
-                    ${cloudDB.incidents.length > 0 ? `
+                    ${serverDB.incidents.length > 0 ? `
                     <div class="space-y-6">
-                        ${cloudDB.incidents.map(incident => `
-                        <div class="bg-white rounded-xl shadow-lg p-6 incident-item" data-id="${incident.id}">
+                        ${serverDB.incidents.map(incident => `
+                        <div class="bg-white rounded-xl shadow-lg p-6">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
                                     <h3 class="text-lg font-semibold text-gray-900">${incident.category}</h3>
@@ -841,20 +779,11 @@
                             </div>
                             ` : ''}
                             
-                            <div class="flex items-center text-sm text-gray-500 mb-4">
+                            <div class="flex items-center text-sm text-gray-500">
                                 <div class="h-8 w-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center mr-2">
                                     <span class="text-white font-semibold">${incident.reportedBy.firstName.charAt(0)}${incident.reportedBy.lastName.charAt(0)}</span>
                                 </div>
                                 <span>${incident.reportedBy.firstName} ${incident.reportedBy.lastName}</span>
-                            </div>
-                            
-                            <div class="incident-actions">
-                                <button class="action-btn download-btn" data-id="${incident.id}">
-                                    <i class="fas fa-download mr-1"></i> Descargar
-                                </button>
-                                <button class="action-btn delete-btn" data-id="${incident.id}">
-                                    <i class="fas fa-trash mr-1"></i> Eliminar
-                                </button>
                             </div>
                         </div>
                         `).join('')}
@@ -866,6 +795,109 @@
                         <p class="text-gray-600">Aún no se han reportado incidencias en el sistema.</p>
                     </div>
                     `}
+                </main>
+            </div>
+            `;
+        }
+
+        function getManageCategoriesComponent() {
+            return `
+            <div class="min-h-screen bg-gray-50">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center">
+                                <button id="backToAdminCategories" class="mr-4 text-gray-600 hover:text-gray-800">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-tags text-white text-sm"></i>
+                                </div>
+                                <h1 class="text-lg font-semibold text-gray-900">Gestión de Categorías</h1>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
+                                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                    <i class="fas fa-sign-out-alt mr-1"></i> Salir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Gestión de Categorías</h2>
+                            <p class="text-gray-600">Gestiona las categorías de incidencias para ambos departamentos</p>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
+                            <span class="text-sm text-green-600">Sincronizado: ${new Date(serverDB.lastUpdate).toLocaleTimeString()}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <!-- Production Categories -->
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-industry mr-2 text-orange-500"></i> Producción
+                            </h4>
+                            <div class="space-y-3 mb-4">
+                                ${state.productionCategories.map((cat, index) => `
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-gray-700">${cat}</span>
+                                        <button class="text-red-500 hover:text-red-700 remove-category" 
+                                                data-type="production" data-index="${index}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="flex">
+                                <input type="text" id="newProductionCategory" 
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       placeholder="Nueva categoría...">
+                                <button id="addProductionCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 transition-colors">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Warehouse Categories -->
+                        <div>
+                            <h4 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                <i class="fas fa-warehouse mr-2 text-green-500"></i> Almacén
+                            </h4>
+                            <div class="space-y-3 mb-4">
+                                ${state.warehouseCategories.map((cat, index) => `
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <span class="text-gray-700">${cat}</span>
+                                        <button class="text-red-500 hover:text-red-700 remove-category" 
+                                                data-type="warehouse" data-index="${index}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="flex">
+                                <input type="text" id="newWarehouseCategory" 
+                                       class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       placeholder="Nueva categoría...">
+                                <button id="addWarehouseCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 transition-colors">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 flex justify-end">
+                        <button id="saveCategories" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                            <i class="fas fa-save mr-2"></i> Guardar Categorías
+                        </button>
+                    </div>
                 </main>
             </div>
             `;
@@ -1084,35 +1116,53 @@
                 incidentForm.addEventListener('submit', handleIncidentSubmit);
             }
 
-            // Admin panel
+            // Admin panel - Users
             const manageUsersBtn = document.getElementById('manageUsersBtn');
             if (manageUsersBtn) {
                 manageUsersBtn.addEventListener('click', () => {
+                    state.currentPage = 'pendingUsers';
+                    render();
+                });
+            }
+
+            // Admin panel - Incidents
+            const viewIncidentsBtn = document.getElementById('viewIncidentsBtn');
+            if (viewIncidentsBtn) {
+                viewIncidentsBtn.addEventListener('click', () => {
                     state.currentPage = 'admin';
                     render();
                 });
             }
 
-            const viewIncidentsBtn = document.getElementById('viewIncidentsBtn');
-            if (viewIncidentsBtn) {
-                viewIncidentsBtn.addEventListener('click', () => {
-                    state.currentPage = 'viewIncidents';
+            // Admin panel - Categories
+            const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
+            if (manageCategoriesBtn) {
+                manageCategoriesBtn.addEventListener('click', () => {
+                    state.currentPage = 'manageCategories';
                     render();
                 });
             }
 
-            // Back to dashboard from admin
-            const backToDashboardAdmin = document.getElementById('backToDashboardAdmin');
-            if (backToDashboardAdmin) {
-                backToDashboardAdmin.addEventListener('click', () => {
+            // Back to admin dashboard
+            const backToAdmin = document.getElementById('backToAdmin');
+            if (backToAdmin) {
+                backToAdmin.addEventListener('click', () => {
                     state.currentPage = 'dashboard';
                     render();
                 });
             }
 
-            const backToDashboardIncidents = document.getElementById('backToDashboardIncidents');
-            if (backToDashboardIncidents) {
-                backToDashboardIncidents.addEventListener('click', () => {
+            const backToAdminDashboard = document.getElementById('backToAdminDashboard');
+            if (backToAdminDashboard) {
+                backToAdminDashboard.addEventListener('click', () => {
+                    state.currentPage = 'dashboard';
+                    render();
+                });
+            }
+
+            const backToAdminCategories = document.getElementById('backToAdminCategories');
+            if (backToAdminCategories) {
+                backToAdminCategories.addEventListener('click', () => {
                     state.currentPage = 'dashboard';
                     render();
                 });
@@ -1122,11 +1172,21 @@
             document.querySelectorAll('.approve-user').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const email = e.currentTarget.getAttribute('data-email');
-                    const user = [...cloudDB.pendingUsers, ...cloudDB.users].find(u => u.email === email);
-                    if (user && !user.approved) {
-                        // Enviar al servidor
+                    if (confirm('¿Estás seguro de que deseas aprobar este usuario?')) {
                         await sendToServer('approveUser', { email });
                         alert('Usuario aprobado correctamente');
+                        render();
+                    }
+                });
+            });
+
+            // Reject user
+            document.querySelectorAll('.reject-user').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const email = e.currentTarget.getAttribute('data-email');
+                    if (confirm('¿Estás seguro de que deseas rechazar este usuario?')) {
+                        await sendToServer('rejectUser', { email });
+                        alert('Usuario rechazado');
                         render();
                     }
                 });
@@ -1137,7 +1197,6 @@
                 btn.addEventListener('click', async (e) => {
                     const email = e.currentTarget.getAttribute('data-email');
                     if (confirm('¿Estás seguro de que deseas eliminar este usuario? Esta acción no se puede deshacer.')) {
-                        // Enviar al servidor
                         await sendToServer('deleteUser', { email });
                         alert('Usuario eliminado correctamente');
                         render();
@@ -1196,7 +1255,6 @@
             const saveCategories = document.getElementById('saveCategories');
             if (saveCategories) {
                 saveCategories.addEventListener('click', async () => {
-                    // Enviar al servidor
                     await sendToServer('categories', {
                         production: state.productionCategories,
                         warehouse: state.warehouseCategories
@@ -1204,57 +1262,6 @@
                     alert('Categorías guardadas correctamente y sincronizadas con todos los dispositivos');
                 });
             }
-
-            // Download incident
-            document.querySelectorAll('.download-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const incidentId = this.getAttribute('data-id');
-                    downloadIncident(incidentId);
-                });
-            });
-
-            // Delete incident
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', async function() {
-                    const incidentId = this.getAttribute('data-id');
-                    if (confirm('¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer.')) {
-                        // Enviar al servidor
-                        await sendToServer('deleteIncident', { id: incidentId });
-                        alert('Incidencia eliminada correctamente y sincronizada con todos los dispositivos');
-                        render();
-                    }
-                });
-            });
-        }
-
-        // Functions for download and delete
-        function downloadIncident(incidentId) {
-            const incident = cloudDB.incidents.find(i => i.id == incidentId);
-            if (!incident) return;
-
-            // Create content for download
-            let content = `INFORME DE INCIDENCIA\n`;
-            content += `===================\n\n`;
-            content += `Fecha: ${new Date(incident.date).toLocaleDateString()} ${new Date(incident.date).toLocaleTimeString()}\n`;
-            content += `Departamento: ${incident.department === 'production' ? 'Producción' : 'Almacén'}\n`;
-            content += `Categoría: ${incident.category}\n`;
-            content += `Operario que reporta: ${incident.operator}\n`;
-            content += `Reportado por: ${incident.reportedBy.firstName} ${incident.reportedBy.lastName}\n\n`;
-            content += `Descripción:\n${incident.description}\n\n`;
-            content += `Número de imágenes adjuntas: ${incident.images.length}`;
-
-            // Create blob and download
-            const blob = new Blob([content], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `incidencia_${incidentId}_${new Date().toISOString().slice(0, 10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-
-            alert('Incidencia descargada correctamente');
         }
 
         // Handlers
@@ -1264,22 +1271,22 @@
             const password = document.getElementById('password').value;
 
             // Check if admin
-            if (password === cloudDB.adminPassword) {
+            if (password === serverDB.adminPassword) {
                 state.currentUser = { email, firstName: 'Admin', lastName: 'System', department: 'admin' };
                 state.isAdmin = true;
                 state.currentPage = 'dashboard';
-                render();
+                syncWithServer().then(() => render());
                 return;
             }
 
             // Check if regular user
-            const user = [...cloudDB.users, ...cloudDB.pendingUsers].find(u => u.email === email && u.password === password);
+            const user = [...serverDB.users, ...serverDB.pendingUsers].find(u => u.email === email && u.password === password);
             if (user) {
-                if (cloudDB.users.includes(user)) {
+                if (serverDB.users.includes(user)) {
                     state.currentUser = user;
                     state.isAdmin = false;
                     state.currentPage = 'dashboard';
-                    render();
+                    syncWithServer().then(() => render());
                 } else {
                     alert('Tu cuenta está pendiente de aprobación por el administrador.');
                 }
@@ -1302,7 +1309,7 @@
                 return;
             }
 
-            if (cloudDB.users.some(u => u.email === email) || cloudDB.pendingUsers.some(u => u.email === email)) {
+            if (serverDB.users.some(u => u.email === email) || serverDB.pendingUsers.some(u => u.email === email)) {
                 alert('Ya existe un usuario con este correo electrónico');
                 return;
             }
@@ -1380,7 +1387,7 @@
                 console.log('Asunto: Nueva incidencia reportada');
                 console.log('Cuerpo:', `Se ha reportado una nueva incidencia:\nCategoría: ${finalCategory}\nDepartamento: ${state.selectedDepartment === 'production' ? 'Producción' : 'Almacén'}\nOperario: ${operator}\nDescripción: ${description}\nReportado por: ${state.currentUser.firstName} ${state.currentUser.lastName}`);
 
-                alert('Incidencia reportada correctamente. Se ha enviado un correo a los responsables correspondientes y se ha sincronizado con todos los dispositivos.');
+                alert('Incidencia reportada correctamente. Se ha enviado un correo a los responsables correspondientes y se ha guardado en la nube.');
                 
                 // Reset form
                 state.currentPage = 'dashboard';

@@ -1,0 +1,1588 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logística Inversa Family Chas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+        }
+        .logo-text {
+            color: #000000;
+        }
+        .btn-primary {
+            background-color: #1f2937;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #111827;
+        }
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+        .btn-warning {
+            background-color: #f59e0b;
+            color: white;
+        }
+        .border-primary {
+            border-color: #1f2937;
+        }
+        .text-primary {
+            color: #1f2937;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        .auth-container {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+        }
+        .incidencia-row {
+            background-color: #fee2e2;
+        }
+        .alert-incidencia {
+            background-color: #fee2e2;
+            border-left: 4px solid #ef4444;
+        }
+        .tab-active {
+            border-bottom: 2px solid #1f2937;
+            color: #1f2937;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            border-bottom: 2px solid transparent;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .tab-inactive:hover {
+            color: #374151;
+        }
+        .tienda-option {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .tienda-option:hover {
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+<body class="bg-white min-h-screen">
+    <div id="app">
+        <!-- Pantalla de Autenticación -->
+        <div id="authScreen" class="auth-container flex items-center justify-center p-4">
+            <div class="max-w-md w-full">
+                <!-- Logo y Título -->
+                <div class="text-center mb-8">
+                    <h1 class="text-5xl md:text-6xl font-bold logo-text mb-2">Family Chas</h1>
+                    <p class="text-2xl text-gray-600 font-medium">Logística Inversa</p>
+                </div>
+
+                <!-- Tabs de Login/Registro -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="border-b border-gray-200">
+                        <nav class="flex">
+                            <button id="loginTab" class="flex-1 py-4 text-center font-medium tab-active">Iniciar Sesión</button>
+                            <button id="registerTab" class="flex-1 py-4 text-center font-medium tab-inactive">Registrarse</button>
+                            <button id="adminTab" class="flex-1 py-4 text-center font-medium tab-inactive">Acceso Administrador</button>
+                        </nav>
+                    </div>
+
+                    <!-- Formulario de Inicio de Sesión -->
+                    <div id="loginForm" class="p-6">
+                        <form id="loginCredentials">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico</label>
+                                    <input type="email" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="usuario@tienda.com" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                                    <input type="password" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="••••••••" required>
+                                </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <label class="flex items-center">
+                                        <input type="checkbox" class="rounded border-gray-300 text-gray-600 focus:ring-gray-500">
+                                        <span class="ml-2 text-gray-600">Recordar sesión</span>
+                                    </label>
+                                    <button type="button" id="forgotPasswordBtn" class="text-primary hover:text-gray-800 font-medium">¿Olvidaste tu contraseña?</button>
+                                </div>
+                                <button type="submit" class="w-full btn-primary py-3 rounded-lg hover:shadow-md transition-all duration-200 mt-4">
+                                    Iniciar Sesión
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Formulario de Registro -->
+                    <div id="registerForm" class="p-6 hidden">
+                        <form id="registerCredentials">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Nombre" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Apellidos</label>
+                                    <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Apellidos" required>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Correo Electrónico Corporativo</label>
+                                    <input type="email" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="usuario@tienda.com" required>
+                                    <p class="text-xs text-gray-500 mt-1">Debe usar su correo corporativo de la tienda</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tienda Asignada</label>
+                                    <select id="tiendaSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" required>
+                                        <option value="">Seleccionar tienda...</option>
+                                        <option value="xativa">Family Cash Xàtiva</option>
+                                        <option value="torrent">Family Cash Torrent</option>
+                                        <option value="ontinyent">Family Cash Ontinyent</option>
+                                        <option value="lalqueria">Family Cash L'Alqueria</option>
+                                        <option value="museros">Family Cash Museros</option>
+                                        <option value="gandia">Family Cash Gandia</option>
+                                        <option value="alzira">Family Cash Alzira</option>
+                                        <option value="vinaros">Family Cash Vinaròs</option>
+                                        <option value="alcoi">Family Cash Alcoi</option>
+                                        <option value="montilla">Family Cash Montilla</option>
+                                        <option value="molina">Family Cash Molina del Segura</option>
+                                        <option value="moron">Family Cash Morón de la Frontera</option>
+                                        <option value="osuna">Family Cash Osuna</option>
+                                        <option value="sagunto">Family Cash Sagunto</option>
+                                        <option value="amposta">Family Cash Amposta</option>
+                                        <option value="pobla">Family Cash La Pobla de Vallbona</option>
+                                        <option value="tomelloso">Family Cash Tomelloso</option>
+                                        <option value="carcaixent">Family Cash Carcaixent</option>
+                                        <option value="alcala">Family Cash Alcalá de Guadaira</option>
+                                        <option value="burjassot">Family Cash Burjassot – C.C. Parque Albán</option>
+                                        <option value="vall">Family Cash Vall D'Uixo</option>
+                                        <option value="utrera">Family Cash Utrera</option>
+                                        <option value="puertollano">Family Cash Puertollano</option>
+                                        <option value="almendralejo">Family Cash Almendralejo</option>
+                                        <option value="azuqueca">Family Cash Azuqueca de Henares</option>
+                                        <option value="zaragoza">Family Cash Zaragoza</option>
+                                        <option value="lebrija">Family Cash Lebrija</option>
+                                        <option value="melilla">Family Cash Melilla</option>
+                                        <option value="guadalajara">Family Cash Guadalajara – C.C. Guadalcarria</option>
+                                        <option value="viana">Family Cash Viana – C.C. Las Cañas</option>
+                                        <option value="castellon">Family Cash Castellón</option>
+                                        <option value="chiclana">Family Cash Chiclana de la Frontera</option>
+                                        <option value="lorca">Family Cash Lorca</option>
+                                        <option value="alcala2">Family Cash Alcalá de Henares – C.C. Quadernillos</option>
+                                        <option value="albacete">Family Cash Albacete</option>
+                                        <option value="finestrat">Family Cash Finestrat</option>
+                                        <option value="benicarlo">Family Cash Benicarló – C.C. Family Parc</option>
+                                        <option value="sanjuan">Family Cash San Juan de Aznalfarache – C.C. Cavaleri</option>
+                                        <option value="lugo1">Family Cash Lugo – C.C. As Termas</option>
+                                        <option value="lugo2">Family Cash Lugo – C.C. Family Parc</option>
+                                        <option value="arena">Family Cash C.C. Arena Multiespacio</option>
+                                        <option value="andorra">Family Cash C.C. Epizen (Andorra)</option>
+                                        <option value="petrer">Family Cash C.C. Petrer (Alicante)</option>
+                                        <option value="toledo">Family Cash Fusión (Toledo)</option>
+                                        <option value="murcia">Family Cash Myrtea (Murcia)</option>
+                                        <option value="tarragona">Family Cash Tarragona (Family Parc)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Rol en la Empresa</label>
+                                    <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" required>
+                                        <option value="">Seleccionar rol...</option>
+                                        <option value="usuario">Usuario que expide palets</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                                    <input type="password" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="••••••••" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Confirmar Contraseña</label>
+                                    <input type="password" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="••••••••" required>
+                                </div>
+                                <div class="flex items-center">
+                                    <input type="checkbox" class="rounded border-gray-300 text-gray-600 focus:ring-gray-500 mr-2" required>
+                                    <label class="text-sm text-gray-600">
+                                        Acepto los <a href="#" class="text-primary hover:underline">términos y condiciones</a> y la <a href="#" class="text-primary hover:underline">política de privacidad</a>
+                                    </label>
+                                </div>
+                                <button type="submit" class="w-full btn-primary py-3 rounded-lg hover:shadow-md transition-all duration-200 mt-4">
+                                    Registrarse
+                                </button>
+                            </div>
+                        </form>
+                        <div class="mt-4 text-center">
+                            <button id="backToLoginBtn" class="text-primary hover:text-gray-800 font-medium">¿Ya tienes cuenta? Inicia sesión</button>
+                        </div>
+                    </div>
+
+                    <!-- Formulario de Administrador -->
+                    <div id="adminForm" class="p-6 hidden">
+                        <form id="adminCredentials">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Código de Acceso Administrador</label>
+                                    <input type="password" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Ingrese código secreto" required>
+                                    <p class="text-xs text-gray-500 mt-1">Código secreto: 211921</p>
+                                </div>
+                                <button type="submit" class="w-full btn-primary py-3 rounded-lg hover:shadow-md transition-all duration-200">
+                                    Acceder como Administrador
+                                </button>
+                            </div>
+                        </form>
+                        <div class="mt-4 text-center">
+                            <button id="backToLoginBtn2" class="text-primary hover:text-gray-800 font-medium">← Volver a acceso operario</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Información del Sistema -->
+                <div class="mt-8 text-center text-sm text-gray-500">
+                    <p>Sistema de gestión de logística inversa para supermercados</p>
+                    <p class="mt-1">Control de devoluciones, palés de madera y residuos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido Principal Operario -->
+        <div id="mainContentOperario" class="hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-6">
+                        <div class="flex items-center">
+                            <h1 class="text-3xl font-bold logo-text">Logística Inversa</h1>
+                            <span class="text-3xl font-bold ml-2">Family Chas</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-sm text-gray-600">
+                                <span id="tiendaActual">Tienda: Xàtiva</span>
+                                <span class="mx-2">|</span>
+                                <span id="usuarioActual">Usuario: Juan Pérez</span>
+                                <span class="mx-2">|</span>
+                                <span id="rolActual">Rol: Usuario que expide palets</span>
+                            </div>
+                            <button id="logoutBtnOperario" class="text-gray-500 hover:text-gray-700">
+                                <i data-lucide="log-out" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Navegación por pestañas -->
+                <div class="mb-8">
+                    <nav class="flex space-x-8">
+                        <button id="tabCarga" class="py-2 px-1 border-b-2 tab-active font-medium text-sm">Registro de Carga</button>
+                        <button id="tabRecepcion" class="py-2 px-1 border-b-2 tab-inactive font-medium text-sm opacity-50 cursor-not-allowed" disabled>
+                            Registro de Recepción
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Contenido de Registro de Carga -->
+                <div id="contentCarga" class="space-y-8">
+                    <div class="text-center">
+                        <h2 class="text-2xl font-bold text-gray-900">Registro de Carga de Palés</h2>
+                        <p class="text-gray-600">Complete el formulario para registrar la carga de palés y devoluciones</p>
+                    </div>
+
+                    <!-- Formulario de Carga -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                        <form id="cargaForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Carga</label>
+                                        <input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" id="fechaCarga" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de Palés Cargados</label>
+                                        <input type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Cantidad de palés" min="0" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">¿Hay devoluciones?</label>
+                                        <div class="flex space-x-4">
+                                            <label class="inline-flex items-center">
+                                                <input type="radio" name="tieneDevolucion" value="si" class="text-gray-600" onchange="toggleDevolucionFields(this)">
+                                                <span class="ml-2 text-sm text-gray-700">Sí</span>
+                                            </label>
+                                            <label class="inline-flex items-center">
+                                                <input type="radio" name="tieneDevolucion" value="no" class="text-gray-600" onchange="toggleDevolucionFields(this)">
+                                                <span class="ml-2 text-sm text-gray-700">No</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div id="devolucionFields" class="hidden space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Devolución</label>
+                                            <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                                                <option value="">Seleccionar tipo...</option>
+                                                <option value="producto">Producto Caducado</option>
+                                                <option value="dano">Producto Dañado</option>
+                                                <option value="otros">Otros</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">¿Tiene albarán?</label>
+                                            <div class="flex space-x-4">
+                                                <label class="inline-flex items-center">
+                                                    <input type="radio" name="tieneAlbaran" value="si" class="text-gray-600" onchange="toggleAlbaranField(this)">
+                                                    <span class="ml-2 text-sm text-gray-700">Sí</span>
+                                                </label>
+                                                <label class="inline-flex items-center">
+                                                    <input type="radio" name="tieneAlbaran" value="no" class="text-gray-600" onchange="toggleAlbaranField(this)">
+                                                    <span class="ml-2 text-sm text-gray-700">No</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div id="albaranField" class="hidden">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Número de Albarán</label>
+                                            <div class="flex">
+                                                <input type="text" id="numeroAlbaran" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500 bg-gray-50 font-mono" readonly>
+                                                <button type="button" id="generarAlbaranBtn" class="ml-2 px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-700">
+                                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div id="justificacionField" class="hidden">
+                                            <label class="block text-sm font-medium text-gray-700 mb-1">Justificación (sin albarán)</label>
+                                            <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" rows="2" placeholder="Motivo de la devolución sin albarán..."></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Transporte</label>
+                                        <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" required>
+                                            <option value="">Seleccionar tipo de transporte...</option>
+                                            <option value="giltrans">Transporte Giltrans</option>
+                                            <option value="tiendas">Transpaso a Tiendas</option>
+                                            <option value="central">Transporte a Almacén Central</option>
+                                            <option value="otros">Transporte a Otros Almacenes</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Transportista</label>
+                                        <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Nombre del transportista" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula del Camión</label>
+                                        <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Ej: 1234 ABC" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Observaciones</label>
+                                        <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" rows="4" placeholder="Estado de los palés, condiciones, etc..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex justify-end space-x-3">
+                                <button type="reset" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                                    Limpiar
+                                </button>
+                                <button type="submit" class="btn-primary px-6 py-2 rounded-lg hover:shadow-md transition-all duration-200">
+                                    Registrar Carga
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Historial de Cargas -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Historial de Cargas Recientes</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Palés</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Albarán</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transportista</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="historialCargas">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">05/04/2025</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 font-mono">
+                                                    ALB-2025-0456
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Juan Martínez</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    Registrado
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="text-primary hover:text-gray-800">Ver</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido de Registro de Recepción (inicialmente oculto) -->
+                <div id="contentRecepcion" class="hidden space-y-8">
+                    <div class="text-center">
+                        <h2 class="text-2xl font-bold text-gray-900">Registro de Recepción de Mercancía</h2>
+                        <p class="text-gray-600">Registre la recepción de mercancía para cuadrar lo que sale y lo que entra</p>
+                    </div>
+
+                    <!-- Formulario de Recepción -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                        <form id="recepcionForm">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Fecha de Recepción</label>
+                                        <input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" id="fechaRecepcion" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Número de Albarán</label>
+                                        <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="ALB-XXXX-XXXX" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tienda de Origen</label>
+                                        <select id="tiendaOrigenSelect" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" required>
+                                            <option value="">Seleccionar tienda origen...</option>
+                                            <option value="xativa">Family Cash Xàtiva</option>
+                                            <option value="torrent">Family Cash Torrent</option>
+                                            <option value="ontinyent">Family Cash Ontinyent</option>
+                                            <option value="lalqueria">Family Cash L'Alqueria</option>
+                                            <option value="museros">Family Cash Museros</option>
+                                            <option value="gandia">Family Cash Gandia</option>
+                                            <option value="alzira">Family Cash Alzira</option>
+                                            <option value="vinaros">Family Cash Vinaròs</option>
+                                            <option value="alcoi">Family Cash Alcoi</option>
+                                            <option value="montilla">Family Cash Montilla</option>
+                                            <option value="molina">Family Cash Molina del Segura</option>
+                                            <option value="moron">Family Cash Morón de la Frontera</option>
+                                            <option value="osuna">Family Cash Osuna</option>
+                                            <option value="sagunto">Family Cash Sagunto</option>
+                                            <option value="amposta">Family Cash Amposta</option>
+                                            <option value="pobla">Family Cash La Pobla de Vallbona</option>
+                                            <option value="tomelloso">Family Cash Tomelloso</option>
+                                            <option value="carcaixent">Family Cash Carcaixent</option>
+                                            <option value="alcala">Family Cash Alcalá de Guadaira</option>
+                                            <option value="burjassot">Family Cash Burjassot – C.C. Parque Albán</option>
+                                            <option value="vall">Family Cash Vall D'Uixo</option>
+                                            <option value="utrera">Family Cash Utrera</option>
+                                            <option value="puertollano">Family Cash Puertollano</option>
+                                            <option value="almendralejo">Family Cash Almendralejo</option>
+                                            <option value="azuqueca">Family Cash Azuqueca de Henares</option>
+                                            <option value="zaragoza">Family Cash Zaragoza</option>
+                                            <option value="lebrija">Family Cash Lebrija</option>
+                                            <option value="melilla">Family Cash Melilla</option>
+                                            <option value="guadalajara">Family Cash Guadalajara – C.C. Guadalcarria</option>
+                                            <option value="viana">Family Cash Viana – C.C. Las Cañas</option>
+                                            <option value="castellon">Family Cash Castellón</option>
+                                            <option value="chiclana">Family Cash Chiclana de la Frontera</option>
+                                            <option value="lorca">Family Cash Lorca</option>
+                                            <option value="alcala2">Family Cash Alcalá de Henares – C.C. Quadernillos</option>
+                                            <option value="albacete">Family Cash Albacete</option>
+                                            <option value="finestrat">Family Cash Finestrat</option>
+                                            <option value="benicarlo">Family Cash Benicarló – C.C. Family Parc</option>
+                                            <option value="sanjuan">Family Cash San Juan de Aznalfarache – C.C. Cavaleri</option>
+                                            <option value="lugo1">Family Cash Lugo – C.C. As Termas</option>
+                                            <option value="lugo2">Family Cash Lugo – C.C. Family Parc</option>
+                                            <option value="arena">Family Cash C.C. Arena Multiespacio</option>
+                                            <option value="andorra">Family Cash C.C. Epizen (Andorra)</option>
+                                            <option value="petrer">Family Cash C.C. Petrer (Alicante)</option>
+                                            <option value="toledo">Family Cash Fusión (Toledo)</option>
+                                            <option value="murcia">Family Cash Myrtea (Murcia)</option>
+                                            <option value="tarragona">Family Cash Tarragona (Family Parc)</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Mercancía</label>
+                                        <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" required>
+                                            <option value="">Seleccionar tipo...</option>
+                                            <option value="pales">Palés de Madera</option>
+                                            <option value="producto">Productos Devueltos</option>
+                                            <option value="embalaje">Embalaje Reutilizable</option>
+                                            <option value="otros">Otros Residuos</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Palés Cargados (origen)</label>
+                                        <input type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Cantidad cargada" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Palés Recibidos (destino)</label>
+                                        <input type="number" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Cantidad recibida" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Nombre del Transportista</label>
+                                        <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Nombre del transportista" required>
+                                    </div>
+
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Matrícula del Camión</label>
+                                        <input type="text" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" placeholder="Ej: 1234 ABC" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Estado de la Mercancía</label>
+                                <textarea class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500" rows="3" placeholder="Estado de los palés, daños, condiciones, etc..."></textarea>
+                            </div>
+
+                            <div id="alertIncidencia" class="hidden alert-incidencia p-4 mb-4 mt-4">
+                                <div class="flex">
+                                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-600 mr-2 mt-0.5"></i>
+                                    <div>
+                                        <h4 class="font-medium text-red-800">Incidencia Detectada</h4>
+                                        <p class="text-red-700 text-sm" id="mensajeIncidencia">Se han recibido 12 palés pero se cargaron 15. Diferencia de 3 palés.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-6 flex justify-end space-x-3">
+                                <button type="reset" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                                    Limpiar
+                                </button>
+                                <button type="submit" class="btn-primary px-6 py-2 rounded-lg hover:shadow-md transition-all duration-200">
+                                    Registrar Recepción
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Historial de Recepciones -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Historial de Recepciones Recientes</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Albarán</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargados</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recibidos</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diferencia</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="historialRecepciones">
+                                        <tr class="incidencia-row">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">05/04/2025</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 font-mono">
+                                                    ALB-2025-0456
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-3</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Incidencia
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="text-primary hover:text-gray-800">Ver</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Contenido Principal Administrador -->
+        <div id="mainContentAdmin" class="hidden">
+            <!-- Header -->
+            <header class="bg-white shadow-sm border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-6">
+                        <div class="flex items-center">
+                            <h1 class="text-3xl font-bold logo-text">Logística Inversa</h1>
+                            <span class="text-3xl font-bold ml-2">Family Chas</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="text-sm text-gray-600">
+                                <span>Rol: <span class="font-medium">Administrador</span></span>
+                            </div>
+                            <button id="logoutBtnAdmin" class="text-gray-500 hover:text-gray-700">
+                                <i data-lucide="log-out" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <!-- Navegación por pestañas del administrador -->
+                <div class="mb-8">
+                    <nav class="flex space-x-8">
+                        <button id="tabDashboard" class="py-2 px-1 border-b-2 tab-active font-medium text-sm">Dashboard</button>
+                        <button id="tabUsuarios" class="py-2 px-1 border-b-2 tab-inactive font-medium text-sm">Gestión de Usuarios</button>
+                        <button id="tabOperaciones" class="py-2 px-1 border-b-2 tab-inactive font-medium text-sm">Operaciones</button>
+                    </nav>
+                </div>
+
+                <!-- Contenido Dashboard -->
+                <div id="contentDashboard" class="space-y-8">
+                    <div class="text-center">
+                        <h2 class="text-2xl font-bold text-gray-900">Panel de Control Administrador</h2>
+                        <p class="text-gray-600">Supervisión de todas las operaciones logísticas</p>
+                    </div>
+
+                    <!-- Resumen General -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow border border-primary card-hover transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-gray-100 rounded-lg mr-4">
+                                    <i data-lucide="truck" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Palés Cargados</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="palesCargados">156</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow border border-primary card-hover transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-gray-100 rounded-lg mr-4">
+                                    <i data-lucide="check-circle" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Palés Recibidos</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="palesRecibidosAdmin">142</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow border border-primary card-hover transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-gray-100 rounded-lg mr-4">
+                                    <i data-lucide="alert-triangle" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Diferencia</p>
+                                    <p class="text-2xl font-bold text-red-600" id="diferenciaPales">14</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-lg shadow border border-primary card-hover transition-all duration-200">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-gray-100 rounded-lg mr-4">
+                                    <i data-lucide="users" class="w-6 h-6 text-primary"></i>
+                                </div>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Usuarios</p>
+                                    <p class="text-2xl font-bold text-gray-900" id="totalUsuarios">24</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico de seguimiento -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Seguimiento de Operaciones</h3>
+                        <div class="h-64 bg-gray-50 rounded-lg flex items-center justify-center">
+                            <div class="text-center">
+                                <i data-lucide="bar-chart-2" class="w-12 h-12 text-gray-400 mx-auto mb-2"></i>
+                                <p class="text-gray-500">Gráfico de seguimiento de palés (cargados vs recibidos)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido Gestión de Usuarios -->
+                <div id="contentUsuarios" class="hidden space-y-8">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Gestión de Usuarios</h2>
+                            <p class="text-gray-600">Aprobación, bloqueo y gestión de permisos</p>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                        <div class="flex flex-wrap gap-4">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Tienda</label>
+                                <select id="filtroTienda" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                                    <option value="">Todas las tiendas</option>
+                                    <option value="xativa">Family Cash Xàtiva</option>
+                                    <option value="torrent">Family Cash Torrent</option>
+                                    <option value="ontinyent">Family Cash Ontinyent</option>
+                                    <option value="lalqueria">Family Cash L'Alqueria</option>
+                                    <option value="museros">Family Cash Museros</option>
+                                    <option value="gandia">Family Cash Gandia</option>
+                                    <option value="alzira">Family Cash Alzira</option>
+                                    <option value="vinaros">Family Cash Vinaròs</option>
+                                    <option value="alcoi">Family Cash Alcoi</option>
+                                    <option value="montilla">Family Cash Montilla</option>
+                                    <option value="molina">Family Cash Molina del Segura</option>
+                                    <option value="moron">Family Cash Morón de la Frontera</option>
+                                    <option value="osuna">Family Cash Osuna</option>
+                                    <option value="sagunto">Family Cash Sagunto</option>
+                                    <option value="amposta">Family Cash Amposta</option>
+                                    <option value="pobla">Family Cash La Pobla de Vallbona</option>
+                                    <option value="tomelloso">Family Cash Tomelloso</option>
+                                    <option value="carcaixent">Family Cash Carcaixent</option>
+                                    <option value="alcala">Family Cash Alcalá de Guadaira</option>
+                                    <option value="burjassot">Family Cash Burjassot – C.C. Parque Albán</option>
+                                    <option value="vall">Family Cash Vall D'Uixo</option>
+                                    <option value="utrera">Family Cash Utrera</option>
+                                    <option value="puertollano">Family Cash Puertollano</option>
+                                    <option value="almendralejo">Family Cash Almendralejo</option>
+                                    <option value="azuqueca">Family Cash Azuqueca de Henares</option>
+                                    <option value="zaragoza">Family Cash Zaragoza</option>
+                                    <option value="lebrija">Family Cash Lebrija</option>
+                                    <option value="melilla">Family Cash Melilla</option>
+                                    <option value="guadalajara">Family Cash Guadalajara – C.C. Guadalcarria</option>
+                                    <option value="viana">Family Cash Viana – C.C. Las Cañas</option>
+                                    <option value="castellon">Family Cash Castellón</option>
+                                    <option value="chiclana">Family Cash Chiclana de la Frontera</option>
+                                    <option value="lorca">Family Cash Lorca</option>
+                                    <option value="alcala2">Family Cash Alcalá de Henares – C.C. Quadernillos</option>
+                                    <option value="albacete">Family Cash Albacete</option>
+                                    <option value="finestrat">Family Cash Finestrat</option>
+                                    <option value="benicarlo">Family Cash Benicarló – C.C. Family Parc</option>
+                                    <option value="sanjuan">Family Cash San Juan de Aznalfarache – C.C. Cavaleri</option>
+                                    <option value="lugo1">Family Cash Lugo – C.C. As Termas</option>
+                                    <option value="lugo2">Family Cash Lugo – C.C. Family Parc</option>
+                                    <option value="arena">Family Cash C.C. Arena Multiespacio</option>
+                                    <option value="andorra">Family Cash C.C. Epizen (Andorra)</option>
+                                    <option value="petrer">Family Cash C.C. Petrer (Alicante)</option>
+                                    <option value="toledo">Family Cash Fusión (Toledo)</option>
+                                    <option value="murcia">Family Cash Myrtea (Murcia)</option>
+                                    <option value="tarragona">Family Cash Tarragona (Family Parc)</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Filtrar por Estado</label>
+                                <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                                    <option value="">Todos los estados</option>
+                                    <option value="pendiente">Pendiente de aprobación</option>
+                                    <option value="activo">Activo</option>
+                                    <option value="bloqueado">Bloqueado</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Usuarios -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Lista de Usuarios</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tienda</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rol</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Permisos</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="listaUsuarios">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">María García</div>
+                                                <div class="text-sm text-gray-500">maria@tienda.com</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Family Cash Xàtiva</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    Usuario que expide palets
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Activo
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <label class="inline-flex items-center">
+                                                    <input type="checkbox" class="rounded border-gray-300 text-gray-600 focus:ring-gray-500" disabled>
+                                                    <span class="ml-2 text-sm text-gray-500">Recepción</span>
+                                                </label>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="btn-success px-3 py-1 rounded text-white text-xs mr-2">Dar Permiso</button>
+                                                <button class="text-red-600 hover:text-red-900">Bloquear</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">Carlos Rodríguez</div>
+                                                <div class="text-sm text-gray-500">carlos@tienda.com</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Family Cash Torrent</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    Usuario que expide palets
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Activo
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <label class="inline-flex items-center">
+                                                    <input type="checkbox" class="rounded border-gray-300 text-gray-600 focus:ring-gray-500" checked>
+                                                    <span class="ml-2 text-sm text-gray-700">Recepción</span>
+                                                </label>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="btn-warning px-3 py-1 rounded text-white text-xs mr-2">Quitar Permiso</button>
+                                                <button class="text-red-600 hover:text-red-900">Bloquear</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">Ana Martínez</div>
+                                                <div class="text-sm text-gray-500">ana@tienda.com</div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Family Cash Ontinyent</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                                    Usuario que expide palets
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                                    Pendiente
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <label class="inline-flex items-center">
+                                                    <input type="checkbox" class="rounded border-gray-300 text-gray-600 focus:ring-gray-500" disabled>
+                                                    <span class="ml-2 text-sm text-gray-500">Recepción</span>
+                                                </label>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="btn-success px-3 py-1 rounded text-white text-xs mr-2">Aprobar</button>
+                                                <button class="text-red-600 hover:text-red-900">Rechazar</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido Operaciones -->
+                <div id="contentOperaciones" class="hidden space-y-8">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Historial de Operaciones</h2>
+                            <p class="text-gray-600">Registro completo de cargas y recepciones</p>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200 p-6">
+                        <div class="flex flex-wrap gap-4">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Inicio</label>
+                                <input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            </div>
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Fecha Fin</label>
+                                <input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                            </div>
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Operación</label>
+                                <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-500">
+                                    <option value="">Todas</option>
+                                    <option value="carga">Carga</option>
+                                    <option value="recepcion">Recepción</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Operaciones -->
+                    <div class="bg-white rounded-lg shadow border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">Historial Completo</h3>
+                        </div>
+                        <div class="p-6">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Albarán</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tienda</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cargados</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recibidos</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Diferencia</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="historialOperaciones">
+                                        <tr class="incidencia-row">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800 font-mono">
+                                                    ALB-2025-0456
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Family Cash Xàtiva</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Carga/Recepción</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">15</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">12</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">-3</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                                    Incidencia
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">05/04/2025</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="text-primary hover:text-gray-800">Detalles</button>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 font-mono">
+                                                    ALB-2025-0455
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Family Cash Torrent</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">Carga/Recepción</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">20</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">20</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">0</td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                    Correcto
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">04/04/2025</td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                                <button class="text-primary hover:text-gray-800">Detalles</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+Úselo Control + Shift + mpara alternar el tabenfoque móvil de la tecla. Alternativamente, use esc"then" tabpara pasar al siguiente elemento interactivo de la página.
+Nuevo Archivo en / · davidmp3086/plastiken-incidencias
+
+        </div>
+
+        <!-- Modal de Confirmación -->
+        <div id="confirmModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="flex items-center mb-4">
+                    <div id="modalIcon" class="p-2 bg-green-100 rounded-lg mr-3">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <h3 id="modalTitle" class="text-lg font-semibold text-gray-900">Éxito</h3>
+                </div>
+                <p id="modalMessage" class="text-gray-600 mb-4">Operación realizada correctamente.</p>
+                <div class="flex justify-end">
+                    <button id="closeModalBtn" class="btn-primary px-4 py-2 rounded-lg">Aceptar</button>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            // Inicializar Lucide icons
+            lucide.createIcons();
+
+            // Estado de autenticación
+            let isAuthenticated = false;
+            let currentUser = null;
+            let currentRole = null;
+            let tienePermisoRecepcion = false;
+
+            // Código secreto del administrador
+            const CODIGO_ADMIN = "211921";
+
+            // Usuarios registrados (simulación de base de datos)
+            let usuarios = [
+                { email: "maria@tienda.com", nombre: "María García", tienda: "Family Cash Xàtiva", rol: "usuario", estado: "activo", permisos: { recepcion: false } },
+                { email: "carlos@tienda.com", nombre: "Carlos Rodríguez", tienda: "Family Cash Torrent", rol: "usuario", estado: "activo", permisos: { recepcion: true } },
+                { email: "ana@tienda.com", nombre: "Ana Martínez", tienda: "Family Cash Ontinyent", rol: "usuario", estado: "pendiente", permisos: { recepcion: false } }
+            ];
+
+            // Mapeo de valores de tiendas a nombres completos
+            const tiendasMap = {
+                'xativa': 'Family Cash Xàtiva',
+                'torrent': 'Family Cash Torrent',
+                'ontinyent': 'Family Cash Ontinyent',
+                'lalqueria': 'Family Cash L\'Alqueria',
+                'museros': 'Family Cash Museros',
+                'gandia': 'Family Cash Gandia',
+                'alzira': 'Family Cash Alzira',
+                'vinaros': 'Family Cash Vinaròs',
+                'alcoi': 'Family Cash Alcoi',
+                'montilla': 'Family Cash Montilla',
+                'molina': 'Family Cash Molina del Segura',
+                'moron': 'Family Cash Morón de la Frontera',
+                'osuna': 'Family Cash Osuna',
+                'sagunto': 'Family Cash Sagunto',
+                'amposta': 'Family Cash Amposta',
+                'pobla': 'Family Cash La Pobla de Vallbona',
+                'tomelloso': 'Family Cash Tomelloso',
+                'carcaixent': 'Family Cash Carcaixent',
+                'alcala': 'Family Cash Alcalá de Guadaira',
+                'burjassot': 'Family Cash Burjassot – C.C. Parque Albán',
+                'vall': 'Family Cash Vall D\'Uixo',
+                'utrera': 'Family Cash Utrera',
+                'puertollano': 'Family Cash Puertollano',
+                'almendralejo': 'Family Cash Almendralejo',
+                'azuqueca': 'Family Cash Azuqueca de Henares',
+                'zaragoza': 'Family Cash Zaragoza',
+                'lebrija': 'Family Cash Lebrija',
+                'melilla': 'Family Cash Melilla',
+                'guadalajara': 'Family Cash Guadalajara – C.C. Guadalcarria',
+                'viana': 'Family Cash Viana – C.C. Las Cañas',
+                'castellon': 'Family Cash Castellón',
+                'chiclana': 'Family Cash Chiclana de la Frontera',
+                'lorca': 'Family Cash Lorca',
+                'alcala2': 'Family Cash Alcalá de Henares – C.C. Quadernillos',
+                'albacete': 'Family Cash Albacete',
+                'finestrat': 'Family Cash Finestrat',
+                'benicarlo': 'Family Cash Benicarló – C.C. Family Parc',
+                'sanjuan': 'Family Cash San Juan de Aznalfarache – C.C. Cavaleri',
+                'lugo1': 'Family Cash Lugo – C.C. As Termas',
+                'lugo2': 'Family Cash Lugo – C.C. Family Parc',
+                'arena': 'Family Cash C.C. Arena Multiespacio',
+                'andorra': 'Family Cash C.C. Epizen (Andorra)',
+                'petrer': 'Family Cash C.C. Petrer (Alicante)',
+                'toledo': 'Family Cash Fusión (Toledo)',
+                'murcia': 'Family Cash Myrtea (Murcia)',
+                'tarragona': 'Family Cash Tarragona (Family Parc)'
+            };
+
+            // Generar número de albarán
+            function generarNumeroAlbaran() {
+                const now = new Date();
+                const year = now.getFullYear();
+                const random = String(Math.floor(Math.random() * 9000) + 1000);
+                return `ALB-${year}-${random}`;
+            }
+
+            // Función para alternar campos de devolución
+            function toggleDevolucionFields(radio) {
+                const devolucionFields = document.getElementById('devolucionFields');
+                if (radio.value === 'si') {
+                    devolucionFields.classList.remove('hidden');
+                } else {
+                    devolucionFields.classList.add('hidden');
+                    // Resetear campos de devolución
+                    document.querySelectorAll('input[name="tieneAlbaran"]').forEach(r => r.checked = false);
+                    document.getElementById('albaranField').classList.add('hidden');
+                    document.getElementById('justificacionField').classList.add('hidden');
+                }
+            }
+
+            // Función para alternar campo de albarán
+            function toggleAlbaranField(radio) {
+                const albaranField = document.getElementById('albaranField');
+                const justificacionField = document.getElementById('justificacionField');
+                
+                if (radio.value === 'si') {
+                    albaranField.classList.remove('hidden');
+                    justificacionField.classList.add('hidden');
+                    // Generar número de albarán automáticamente
+                    document.getElementById('numeroAlbaran').value = generarNumeroAlbaran();
+                } else {
+                    albaranField.classList.add('hidden');
+                    justificacionField.classList.remove('hidden');
+                    document.getElementById('numeroAlbaran').value = '';
+                }
+            }
+
+            // Función para establecer pestaña activa
+            function setActiveTab(activeBtn, ...inactiveBtns) {
+                activeBtn.classList.remove('tab-inactive');
+                activeBtn.classList.add('tab-active');
+                
+                inactiveBtns.forEach(btn => {
+                    btn.classList.remove('tab-active');
+                    btn.classList.add('tab-inactive');
+                });
+            }
+
+            // Función para mostrar modal de éxito
+            function showSuccessModal(title, message, icon, color) {
+                document.getElementById('confirmModal').classList.remove('hidden');
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalMessage').textContent = message;
+                
+                const iconElement = document.getElementById('modalIcon');
+                const bgColor = color === 'green' ? 'bg-green-100' : color === 'yellow' ? 'bg-yellow-100' : 'bg-red-100';
+                const textColor = color === 'green' ? 'text-green-600' : color === 'yellow' ? 'text-yellow-600' : 'text-red-600';
+                const iconHtml = `<i data-lucide="${icon}" class="w-6 h-6 ${textColor}"></i>`;
+                
+                iconElement.className = `p-2 ${bgColor} rounded-lg mr-3`;
+                iconElement.innerHTML = iconHtml;
+                lucide.createIcons();
+            }
+
+            // Función para mostrar modal de error
+            function showErrorModal(message) {
+                document.getElementById('confirmModal').classList.remove('hidden');
+                document.getElementById('modalTitle').textContent = 'Error';
+                document.getElementById('modalMessage').textContent = message;
+                document.getElementById('modalIcon').innerHTML = '<i data-lucide="alert-octagon" class="w-6 h-6 text-red-600"></i>';
+                lucide.createIcons();
+            }
+
+            // Función para actualizar el estado del tab de recepción
+            function updateRecepcionTab() {
+                const tabRecepcion = document.getElementById('tabRecepcion');
+                if (tienePermisoRecepcion) {
+                    tabRecepcion.classList.remove('opacity-50', 'cursor-not-allowed');
+                    tabRecepcion.disabled = false;
+                } else {
+                    tabRecepcion.classList.add('opacity-50', 'cursor-not-allowed');
+                    tabRecepcion.disabled = true;
+                }
+            }
+
+            // Función para obtener texto del rol
+            function getRolTexto(rol) {
+                const roles = {
+                    'usuario': 'Usuario que expide palets'
+                };
+                return roles[rol] || rol;
+            }
+
+            // Función para actualizar contadores
+            function actualizarContadores() {
+                // Contadores simulados
+                const cargados = 156;
+                const recibidos = 142;
+                const diferencia = cargados - recibidos;
+                const totalUsuarios = usuarios.length;
+                
+                document.getElementById('palesCargados').textContent = cargados;
+                document.getElementById('palesRecibidosAdmin').textContent = recibidos;
+                document.getElementById('diferenciaPales').textContent = diferencia;
+                document.getElementById('totalUsuarios').textContent = totalUsuarios;
+            }
+
+            // Mostrar contenido de operario
+            function showOperarioContent() {
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('mainContentOperario').classList.remove('hidden');
+                document.getElementById('mainContentAdmin').classList.add('hidden');
+                
+                // Establecer fecha actual
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('fechaCarga').value = today;
+                document.getElementById('fechaRecepcion').value = today;
+                
+                // Actualizar estado del tab de recepción
+                updateRecepcionTab();
+            }
+
+            // Mostrar contenido de administrador
+            function showAdminContent() {
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('mainContentAdmin').classList.remove('hidden');
+                document.getElementById('mainContentOperario').classList.add('hidden');
+                actualizarContadores();
+                
+                // Mostrar dashboard por defecto
+                document.getElementById('tabDashboard').click();
+            }
+
+            // Cerrar sesión
+            function logout() {
+                isAuthenticated = false;
+                currentUser = null;
+                currentRole = null;
+                tienePermisoRecepcion = false;
+                document.getElementById('mainContentOperario').classList.add('hidden');
+                document.getElementById('mainContentAdmin').classList.add('hidden');
+                document.getElementById('authScreen').classList.remove('hidden');
+            }
+
+            // Event Listeners para autenticación
+            document.addEventListener('DOMContentLoaded', function() {
+                // Manejo de tabs de autenticación
+                document.getElementById('registerTab').addEventListener('click', function() {
+                    setActiveTab(this, document.getElementById('loginTab'), document.getElementById('adminTab'));
+                    document.getElementById('loginForm').classList.add('hidden');
+                    document.getElementById('registerForm').classList.remove('hidden');
+                    document.getElementById('adminForm').classList.add('hidden');
+                });
+
+                document.getElementById('adminTab').addEventListener('click', function() {
+                    setActiveTab(this, document.getElementById('loginTab'), document.getElementById('registerTab'));
+                    document.getElementById('loginForm').classList.add('hidden');
+                    document.getElementById('registerForm').classList.add('hidden');
+                    document.getElementById('adminForm').classList.remove('hidden');
+                });
+
+                document.getElementById('loginTab').addEventListener('click', function() {
+                    setActiveTab(this, document.getElementById('registerTab'), document.getElementById('adminTab'));
+                    document.getElementById('loginForm').classList.remove('hidden');
+                    document.getElementById('registerForm').classList.add('hidden');
+                    document.getElementById('adminForm').classList.add('hidden');
+                });
+
+                // Botones de retorno
+                document.getElementById('backToLoginBtn').addEventListener('click', function() {
+                    document.getElementById('loginTab').click();
+                });
+
+                document.getElementById('backToLoginBtn2').addEventListener('click', function() {
+                    document.getElementById('loginTab').click();
+                });
+
+                // Formulario de login
+                document.getElementById('loginCredentials').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const email = this.querySelector('input[type="email"]').value;
+                    const password = this.querySelector('input[type="password"]').value;
+                    
+                    // Simulación de autenticación
+                    const usuario = usuarios.find(u => u.email === email);
+                    if (usuario && usuario.estado === 'activo') {
+                        isAuthenticated = true;
+                        currentRole = usuario.rol;
+                        tienePermisoRecepcion = usuario.permisos.recepcion;
+                        currentUser = {
+                            email: email,
+                            nombre: usuario.nombre,
+                            tienda: usuario.tienda,
+                            rol: usuario.rol,
+                            permisos: usuario.permisos
+                        };
+                        showOperarioContent();
+                        document.getElementById('tiendaActual').textContent = `Tienda: ${usuario.tienda}`;
+                        document.getElementById('usuarioActual').textContent = `Usuario: ${usuario.nombre}`;
+                        document.getElementById('rolActual').textContent = `Rol: ${getRolTexto(usuario.rol)}`;
+                        
+                        // Actualizar estado del tab de recepción
+                        updateRecepcionTab();
+                        
+                        showSuccessModal('Inicio de Sesión', 
+                            `Bienvenido ${usuario.nombre}. Sesión iniciada correctamente.`,
+                            'check-circle', 'green');
+                    } else if (usuario && usuario.estado === 'pendiente') {
+                        showSuccessModal('Acceso Denegado', 
+                            'Su cuenta está pendiente de aprobación por el administrador. Por favor, espere a que sea aprobada.',
+                            'alert-triangle', 'yellow');
+                    } else {
+                        showSuccessModal('Acceso Denegado', 
+                            'Credenciales incorrectas o cuenta no encontrada. Por favor, verifique sus datos.',
+                            'alert-octagon', 'red');
+                    }
+                });
+
+                // Formulario de registro
+                document.getElementById('registerCredentials').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const nombre = this.querySelectorAll('input')[0].value;
+                    const apellidos = this.querySelectorAll('input')[1].value;
+                    const email = this.querySelector('input[type="email"]').value;
+                    const tiendaValue = this.querySelector('#tiendaSelect').value;
+                    const tiendaText = tiendasMap[tiendaValue];
+                    const rol = this.querySelectorAll('select')[1].value;
+                    const password = this.querySelectorAll('input[type="password"]')[0].value;
+                    const confirmPassword = this.querySelectorAll('input[type="password"]')[1].value;
+                    
+                    if (password !== confirmPassword) {
+                        showErrorModal('Las contraseñas no coinciden');
+                        return;
+                    }
+                    
+                    // Verificar si el email ya existe
+                    if (usuarios.some(u => u.email === email)) {
+                        showErrorModal('Ya existe un usuario con este correo electrónico');
+                        return;
+                    }
+                    
+                    // Agregar nuevo usuario (pendiente de aprobación)
+                    usuarios.push({
+                        email: email,
+                        nombre: nombre + ' ' + apellidos,
+                        tienda: tiendaText,
+                        rol: rol,
+                        estado: 'pendiente',
+                        permisos: { recepcion: false }
+                    });
+                    
+                    showSuccessModal('Registro Exitoso', 
+                        'Registro completado con éxito. Su cuenta está pendiente de aprobación por el administrador. Recibirá un correo cuando sea aprobada.',
+                        'check-circle', 'green');
+                    
+                    // Volver a login
+                    setTimeout(() => {
+                        document.getElementById('loginTab').click();
+                    }, 2000);
+                });
+
+                // Formulario de administrador
+                document.getElementById('adminCredentials').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const codigo = this.querySelector('input[type="password"]').value;
+                    
+                    if (codigo === CODIGO_ADMIN) {
+                        isAuthenticated = true;
+                        currentRole = 'admin';
+                        currentUser = {
+                            role: 'admin'
+                        };
+                        showAdminContent();
+                        
+                        showSuccessModal('Acceso Concedido', 
+                            'Bienvenido al panel de administración. Código de acceso verificado correctamente.',
+                            'shield-check', 'green');
+                    } else {
+                        showErrorModal('El código de acceso es incorrecto. Por favor, verifique el código e inténtelo de nuevo.');
+                    }
+                });
+
+                // Generar número de albarán
+                document.getElementById('generarAlbaranBtn').addEventListener('click', function() {
+                    document.getElementById('numeroAlbaran').value = generarNumeroAlbaran();
+                });
+
+                // Navegación entre pestañas del operario
+                document.getElementById('tabCarga').addEventListener('click', function() {
+                    setActiveTab(this, document.getElementById('tabRecepcion'));
+                    document.getElementById('contentCarga').classList.remove('hidden');
+                    document.getElementById('contentRecepcion').classList.add('hidden');
+                });
+
+                document.getElementById('tabRecepcion').addEventListener('click', function() {
+                    if (tienePermisoRecepcion) {
+                        setActiveTab(this, document.getElementById('tabCarga'));
+                        document.getElementById('contentRecepcion').classList.remove('hidden');
+                        document.getElementById('contentCarga').classList.add('hidden');
+                    } else {
+                        showSuccessModal('Acceso Denegado', 
+                            'No tiene permisos para acceder al registro de recepción. Contacte con el administrador para solicitar acceso.',
+                            'lock', 'red');
+                    }
+                });
+
+                // Navegación entre pestañas del administrador
+                document.getElementById('tabDashboard').addEventListener('click', function() {
+                    setActiveTab(this, document.getElementById('tabUsuarios'), document.getElementById('tabOperaciones'));
+                    document.getElementById('contentDashboard').classList.remove('hidden');
+                    document.getElementById('contentUsuarios').classList.add('hidden');
+                    document.getElementById('contentOperaciones').classList.add('hidden');
+                });
+
+                document.getElementById('tabUsuarios').addEventListener('click', function() {
+                    setActiveTab(this, document.getElementById('tabDashboard'), document.getElementById('tabOperaciones'));
+                    document.getElementById('contentUsuarios').classList.remove('hidden');
+                    document.getElementById('contentDashboard').classList.add('hidden');
+                    document.getElementById('contentOperaciones').classList.add('hidden');
+                });
+
+                document.getElementById('tabOperaciones').addEventListener('click', function() {
+                    setActiveTab(this, document.getElementById('tabDashboard'), document.getElementById('tabUsuarios'));
+                    document.getElementById('contentOperaciones').classList.remove('hidden');
+                    document.getElementById('contentDashboard').classList.add('hidden');
+                    document.getElementById('contentUsuarios').classList.add('hidden');
+                });
+
+                // Validar recepción
+                document.getElementById('recepcionForm').addEventListener('input', function() {
+                    const inputs = this.querySelectorAll('input');
+                    const cargadosInput = Array.from(inputs).find(i => i.placeholder === 'Cantidad cargada');
+                    const recibidosInput = Array.from(inputs).find(i => i.placeholder === 'Cantidad recibida');
+                    
+                    const cargados = parseInt(cargadosInput.value) || 0;
+                    const recibidos = parseInt(recibidosInput.value) || 0;
+                    const diferencia = recibidos - cargados;
+                    
+                    if (diferencia !== 0) {
+                        document.getElementById('alertIncidencia').classList.remove('hidden');
+                        document.getElementById('mensajeIncidencia').textContent = 
+                            `Se han recibido ${recibidos} palés pero se cargaron ${cargados}. Diferencia de ${Math.abs(diferencia)} palés.`;
+                    } else {
+                        document.getElementById('alertIncidencia').classList.add('hidden');
+                    }
+                });
+
+                // Formulario de carga de operario
+                document.getElementById('cargaForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const numeroPalés = this.querySelector('input[type="number"]').value;
+                    const tieneDevolucion = document.querySelector('input[name="tieneDevolucion"]:checked')?.value;
+                    const numeroAlbaran = document.getElementById('numeroAlbaran').value;
+                    const transportista = this.querySelector('input[placeholder="Nombre del transportista"]').value;
+                    
+                    showSuccessModal('Carga Registrada', 
+                        `Carga registrada correctamente. ${numeroPalés} palés cargados.` + 
+                        (tieneDevolucion === 'si' ? ` Albarán: ${numeroAlbaran}` : ''),
+                        'check-circle', 'green');
+                    
+                    // Agregar al historial de operario
+                    const tbody = document.getElementById('historialCargas');
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date().toLocaleDateString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${numeroPalés}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            ${tieneDevolucion === 'si' ? 
+                                `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800 font-mono">${numeroAlbaran}</span>` : 
+                                `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Sin albarán</span>`}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${transportista}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                Registrado
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button class="text-primary hover:text-gray-800">Ver</button>
+                        </td>
+                    `;
+                    tbody.insertBefore(tr, tbody.firstChild);
+                    
+                    // Resetear formulario
+                    this.reset();
+                    document.getElementById('fechaCarga').value = new Date().toISOString().split('T')[0];
+                });
+
+                // Formulario de recepción
+                document.getElementById('recepcionForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const albaran = this.querySelector('input[placeholder="ALB-XXXX-XXXX"]').value;
+                    const inputs = this.querySelectorAll('input');
+                    const cargadosInput = Array.from(inputs).find(i => i.placeholder === 'Cantidad cargada');
+                    const recibidosInput = Array.from(inputs).find(i => i.placeholder === 'Cantidad recibida');
+                    
+                    const cargados = parseInt(cargadosInput.value) || 0;
+                    const recibidos = parseInt(recibidosInput.value) || 0;
+                    const diferencia = recibidos - cargados;
+                    
+                    if (diferencia === 0) {
+                        showSuccessModal('Recepción Confirmada', 
+                            `Recepción confirmada correctamente para el albarán ${albaran}. Todos los palés coinciden.`,
+                            'check-circle', 'green');
+                    } else {
+                        showSuccessModal('Recepción con Incidencia', 
+                            `Recepción confirmada con incidencia para el albarán ${albaran}. Se han registrado las diferencias de ${Math.abs(diferencia)} palés.`,
+                            'alert-triangle', 'yellow');
+                    }
+                    
+                    // Agregar al historial de recepción
+                    const tbody = document.getElementById('historialRecepciones');
+                    const tr = document.createElement('tr');
+                    if (diferencia !== 0) tr.className = 'incidencia-row';
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${new Date().toLocaleDateString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${diferencia === 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} font-mono">
+                                ${albaran}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${cargados}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${recibidos}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm ${diferencia === 0 ? 'text-green-600' : 'text-red-600'}">${diferencia}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${diferencia === 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                                ${diferencia === 0 ? 'Correcto' : 'Incidencia'}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button class="text-primary hover:text-gray-800">Ver</button>
+                        </td>
+                    `;
+                    tbody.insertBefore(tr, tbody.firstChild);
+                    
+                    // Resetear formulario
+                    this.reset();
+                    document.getElementById('fechaRecepcion').value = new Date().toISOString().split('T')[0];
+                });
+
+                // Cerrar modal
+                document.getElementById('closeModalBtn').addEventListener('click', function() {
+                    document.getElementById('confirmModal').classList.add('hidden');
+                    // Restaurar icono por defecto
+                    document.getElementById('modalIcon').innerHTML = '<i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>';
+                    lucide.createIcons();
+                });
+
+                // Logout
+                document.getElementById('logoutBtnOperario').addEventListener('click', function() {
+                    if (confirm('¿Desea cerrar sesión?')) {
+                        logout();
+                    }
+                });
+
+                document.getElementById('logoutBtnAdmin').addEventListener('click', function() {
+                    if (confirm('¿Desea cerrar sesión?')) {
+                        logout();
+                    }
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

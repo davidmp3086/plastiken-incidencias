@@ -1,0 +1,1185 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Incidencias Plastiken</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .login-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-gradient {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #4338ca 0%, #6d28d9 100%);
+        }
+        .category-card {
+            transition: all 0.3s ease;
+        }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .image-preview {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 5px;
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .drag-area {
+            min-height: 120px;
+        }
+        .incident-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        .delete-btn {
+            background: #ef4444;
+            color: white;
+        }
+        .delete-btn:hover {
+            background: #dc2626;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div id="app"></div>
+
+    <script>
+        // Simulación de base de datos
+        const db = {
+            users: [],
+            pendingUsers: [],
+            adminPassword: '1865',
+            productionCategories: [
+                'Máquina', 'Molde', 'Fuga de agua', 'Parado de planta', 
+                'Ausentismo personal', 'Otras incidencias'
+            ],
+            warehouseCategories: [
+                'Palet volcado', 'Carga de contenedor', 'Rotura de artículos', 
+                'Ausentismo', 'Otras incidencias'
+            ],
+            incidents: []
+        };
+
+        // Estado de la aplicación
+        let state = {
+            currentPage: 'login',
+            currentUser: null,
+            isAdmin: false,
+            selectedDepartment: null,
+            selectedCategory: '',
+            customCategory: '',
+            description: '',
+            operator: '',
+            images: [],
+            pendingUsers: [],
+            productionCategories: [...db.productionCategories],
+            warehouseCategories: [...db.warehouseCategories]
+        };
+
+        // Componentes
+        function render() {
+            const app = document.getElementById('app');
+            app.innerHTML = getComponent(state.currentPage);
+            setTimeout(addEventListeners, 100); // Añadir un pequeño retraso para asegurar que los elementos están cargados
+        }
+
+        function getComponent(page) {
+            switch (page) {
+                case 'login':
+                    return getLoginComponent();
+                case 'register':
+                    return getRegisterComponent();
+                case 'dashboard':
+                    return getDashboardComponent();
+                case 'report':
+                    return getReportComponent();
+                case 'admin':
+                    return getAdminComponent();
+                case 'viewIncidents':
+                    return getViewIncidentsComponent();
+                default:
+                    return getLoginComponent();
+            }
+        }
+
+        function getLoginComponent() {
+            return `
+            <div class="min-h-screen flex items-center justify-center login-container">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+                    <div class="text-center mb-8">
+                        <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-exclamation-triangle text-4xl text-white"></i>
+                        </div>
+                        <h1 class="text-4xl font-bold text-gray-800">Portal de Incidencias</h1>
+                        <p class="text-xl text-gray-600 mt-2">Plastiken</p>
+                    </div>
+                    
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input type="email" id="email" required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="tu.correo@plastiken.com">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" id="password" required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Contraseña">
+                            </div>
+                        </div>
+                        
+                        <button type="submit"
+                            class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all transform hover:scale-105 duration-200">
+                            Iniciar Sesión
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <p class="text-gray-600">¿No tienes cuenta?</p>
+                        <button id="registerBtn" class="text-blue-600 hover:text-blue-800 font-medium">
+                            Regístrate aquí
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function getRegisterComponent() {
+            return `
+            <div class="min-h-screen flex items-center justify-center login-container">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
+                    <div class="text-center mb-8">
+                        <div class="bg-gradient-to-r from-green-600 to-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-plus text-4xl text-white"></i>
+                        </div>
+                        <h1 class="text-4xl font-bold text-gray-800">Registro</h1>
+                        <p class="text-xl text-gray-600 mt-2">Crea tu cuenta en Plastiken</p>
+                    </div>
+                    
+                    <form id="registerForm" class="space-y-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nombre</label>
+                                <input type="text" id="firstName" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Nombre">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Apellidos</label>
+                                <input type="text" id="lastName" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Apellidos">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                </div>
+                                <input type="email" id="regEmail" required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="tu.correo@plastiken.com">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Departamento</label>
+                            <select id="department" required
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                <option value="">Selecciona un departamento</option>
+                                <option value="production">Producción</option>
+                                <option value="warehouse">Almacén</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Contraseña</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" id="regPassword" required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Contraseña">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Confirmar Contraseña</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" id="confirmPassword" required
+                                    class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Confirmar contraseña">
+                            </div>
+                        </div>
+                        
+                        <button type="submit"
+                            class="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:from-green-700 hover:to-blue-700 transition-all transform hover:scale-105 duration-200">
+                            Registrarse
+                        </button>
+                    </form>
+                    
+                    <div class="mt-6 text-center">
+                        <button id="backToLogin" class="text-blue-600 hover:text-blue-800 font-medium">
+                            ← Volver al inicio de sesión
+                        </button>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        function getDashboardComponent() {
+            return `
+            <div class="min-h-screen bg-gray-50">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center">
+                                <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-exclamation-triangle text-white"></i>
+                                </div>
+                                <h1 class="text-xl font-semibold text-gray-900">Portal de Incidencias</h1>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-sm text-gray-600">Hola, ${state.currentUser.firstName}</span>
+                                <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-sign-out-alt mr-1"></i> Salir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="text-center mb-8">
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Bienvenido al Portal de Incidencias</h2>
+                        <p class="text-gray-600">Selecciona el departamento para reportar una incidencia</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                        <!-- Producción Card -->
+                        <div class="category-card bg-white rounded-xl p-8 text-center hover:shadow-xl transition-all cursor-pointer" id="productionCard">
+                            <div class="bg-gradient-to-r from-orange-400 to-red-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-industry text-4xl text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-3">Producción</h3>
+                            <p class="text-gray-600 mb-6">Reporta incidencias relacionadas con la producción</p>
+                            <button class="bg-gradient-to-r from-orange-400 to-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-orange-500 hover:to-red-600 transition-all">
+                                Reportar Incidencia
+                            </button>
+                        </div>
+
+                        <!-- Almacén Card -->
+                        <div class="category-card bg-white rounded-xl p-8 text-center hover:shadow-xl transition-all cursor-pointer" id="warehouseCard">
+                            <div class="bg-gradient-to-r from-green-400 to-blue-500 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-warehouse text-4xl text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-900 mb-3">Almacén</h3>
+                            <p class="text-gray-600 mb-6">Reporta incidencias relacionadas con el almacén</p>
+                            <button class="bg-gradient-to-r from-green-400 to-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:from-green-500 hover:to-blue-600 transition-all">
+                                Reportar Incidencia
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Admin Panel (visible only for admin) -->
+                    ${state.isAdmin ? `
+                    <div class="mt-12 bg-white rounded-xl p-6 shadow-lg">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-cog mr-3 text-blue-600"></i> Panel de Administración
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-3">Usuarios Pendientes</h4>
+                                <button id="manageUsersBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-users mr-2"></i> Gestionar Usuarios
+                                </button>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-800 mb-3">Gestionar Incidencias</h4>
+                                <button id="viewIncidentsBtn" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-list mr-2"></i> Ver Incidencias
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    ` : ''}
+                </main>
+            </div>
+            `;
+        }
+
+        function getReportComponent() {
+            const categories = state.selectedDepartment === 'production' 
+                ? state.productionCategories 
+                : state.warehouseCategories;
+
+            return `
+            <div class="min-h-screen bg-gray-50">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center">
+                                <button id="backToDashboard" class="mr-4 text-gray-600 hover:text-gray-800">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-exclamation-triangle text-white text-sm"></i>
+                                </div>
+                                <h1 class="text-lg font-semibold text-gray-900">Reportar Incidencia</h1>
+                            </div>
+                            <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Salir
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="bg-white rounded-xl shadow-lg p-8">
+                        <div class="text-center mb-8">
+                            <div class="bg-gradient-to-r from-${state.selectedDepartment === 'production' ? 'orange' : 'green'}-400 to-${state.selectedDepartment === 'production' ? 'red' : 'blue'}-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-${state.selectedDepartment === 'production' ? 'industry' : 'warehouse'} text-2xl text-white"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900">Reportar Incidencia - ${state.selectedDepartment === 'production' ? 'Producción' : 'Almacén'}</h2>
+                            <p class="text-gray-600 mt-2">Por favor, completa todos los campos</p>
+                        </div>
+
+                        <form id="incidentForm" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Categoría de Incidencia</label>
+                                <select id="category" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                                    <option value="">Selecciona una categoría</option>
+                                    ${categories.map(cat => `<option value="${cat}" ${state.selectedCategory === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+                                    <option value="custom" ${state.selectedCategory === 'custom' ? 'selected' : ''}>Otra (especificar)</option>
+                                </select>
+                            </div>
+
+                            ${state.selectedCategory === 'custom' ? `
+                            <div id="customCategoryField">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Especificar Categoría</label>
+                                <input type="text" id="customCategory" value="${state.customCategory}" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Nombre de la categoría">
+                            </div>
+                            ` : ''}
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Operario que reporta</label>
+                                <input type="text" id="operator" value="${state.operator || ''}" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Nombre del operario que reporta la incidencia">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Descripción de la Incidencia</label>
+                                <textarea id="description" value="${state.description}" required rows="4"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="Describe detalladamente la incidencia...">${state.description}</textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Imágenes (máximo 5)
+                                </label>
+                                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors drag-area">
+                                    <input type="file" id="images" accept="image/*" multiple class="hidden">
+                                    <button type="button" id="uploadBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors mb-4">
+                                        <i class="fas fa-upload mr-2"></i> Seleccionar Imágenes
+                                    </button>
+                                    <p class="text-sm text-gray-500">Puedes arrastrar y soltar imágenes aquí</p>
+                                    <p class="text-xs text-gray-400 mt-1">JPG, PNG, GIF hasta 5MB cada una</p>
+                                </div>
+
+                                <div id="imagePreview" class="flex flex-wrap mt-4">
+                                    ${state.images.map((img, index) => `
+                                        <div class="image-preview">
+                                            <img src="${img}" alt="Preview">
+                                            <div class="remove-image" data-index="${index}">
+                                                <i class="fas fa-times"></i>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <div class="flex justify-end space-x-4 pt-6">
+                                <button type="button" id="cancelReport" class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg transition-colors">
+                                    <i class="fas fa-times mr-2"></i> Cancelar
+                                </button>
+                                <button type="submit" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all">
+                                    <i class="fas fa-paper-plane mr-2"></i> Enviar Incidencia
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </main>
+            </div>
+            `;
+        }
+
+        function getAdminComponent() {
+            return `
+            <div class="min-h-screen bg-gray-50">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center">
+                                <button id="backToDashboardAdmin" class="mr-4 text-gray-600 hover:text-gray-800">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-cog text-white text-sm"></i>
+                                </div>
+                                <h1 class="text-lg font-semibold text-gray-900">Panel de Administración</h1>
+                            </div>
+                            <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Salir
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Gestión de Usuarios</h2>
+                        <p class="text-gray-600">Aprobar o rechazar solicitudes de registro</p>
+                    </div>
+
+                    ${db.pendingUsers.length > 0 ? `
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuario</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departamento</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                ${db.pendingUsers.map(user => `
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 flex-shrink-0 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                                                <span class="text-white font-semibold">${user.firstName.charAt(0)}${user.lastName.charAt(0)}</span>
+                                            </div>
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">${user.firstName} ${user.lastName}</div>
+                                                <div class="text-sm text-gray-500">${user.email}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-${user.department === 'production' ? 'orange' : 'green'}-100 text-${user.department === 'production' ? 'orange' : 'green'}-800">
+                                            ${user.department === 'production' ? 'Producción' : 'Almacén'}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        ${new Date(user.createdAt).toLocaleDateString()}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-green-600 hover:text-green-900 mr-4 approve-user" data-email="${user.email}">
+                                            <i class="fas fa-check mr-1"></i> Aprobar
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-900 reject-user" data-email="${user.email}">
+                                            <i class="fas fa-times mr-1"></i> Rechazar
+                                        </button>
+                                    </td>
+                                </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    ` : `
+                    <div class="bg-white rounded-xl p-12 text-center shadow-lg">
+                        <i class="fas fa-users text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay usuarios pendientes</h3>
+                        <p class="text-gray-600">Actualmente no hay solicitudes de registro pendientes de aprobación.</p>
+                    </div>
+                    `}
+
+                    <!-- Category Management -->
+                    <div class="mt-8 bg-white rounded-xl p-6 shadow-lg">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-cog mr-3 text-blue-600"></i> Gestión de Categorías
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <!-- Production Categories -->
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fas fa-industry mr-2 text-orange-500"></i> Producción
+                                </h4>
+                                <div class="space-y-3 mb-4">
+                                    ${state.productionCategories.map((cat, index) => `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <span class="text-gray-700">${cat}</span>
+                                            <button class="text-red-500 hover:text-red-700 remove-category" 
+                                                    data-type="production" data-index="${index}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="flex">
+                                    <input type="text" id="newProductionCategory" 
+                                           class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                           placeholder="Nueva categoría...">
+                                    <button id="addProductionCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg transition-colors">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Warehouse Categories -->
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fas fa-warehouse mr-2 text-green-500"></i> Almacén
+                                </h4>
+                                <div class="space-y-3 mb-4">
+                                    ${state.warehouseCategories.map((cat, index) => `
+                                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                            <span class="text-gray-700">${cat}</span>
+                                            <button class="text-red-500 hover:text-red-700 remove-category" 
+                                                    data-type="warehouse" data-index="${index}">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <div class="flex">
+                                    <input type="text" id="newWarehouseCategory" 
+                                           class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                           placeholder="Nueva categoría...">
+                                    <button id="addWarehouseCategory" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg transition-colors">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+            `;
+        }
+
+        function getViewIncidentsComponent() {
+            return `
+            <div class="min-h-screen bg-gray-50">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b">
+                    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div class="flex justify-between items-center h-16">
+                            <div class="flex items-center">
+                                <button id="backToDashboardIncidents" class="mr-4 text-gray-600 hover:text-gray-800">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-8 h-8 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-list text-white text-sm"></i>
+                                </div>
+                                <h1 class="text-lg font-semibold text-gray-900">Incidencias Registradas</h1>
+                            </div>
+                            <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors">
+                                <i class="fas fa-sign-out-alt mr-1"></i> Salir
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Main Content -->
+                <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">Historial de Incidencias</h2>
+                        <p class="text-gray-600">Visualiza y elimina las incidencias reportadas</p>
+                    </div>
+
+                    ${db.incidents.length > 0 ? `
+                    <div class="space-y-6">
+                        ${db.incidents.map(incident => `
+                        <div class="bg-white rounded-xl shadow-lg p-6 incident-item" data-id="${incident.id}">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h3 class="text-lg font-semibold text-gray-900">${incident.category}</h3>
+                                    <p class="text-sm text-gray-500">${incident.department === 'production' ? 'Producción' : 'Almacén'} • ${new Date(incident.date).toLocaleDateString()} ${new Date(incident.date).toLocaleTimeString()}</p>
+                                </div>
+                                <span class="px-3 py-1 bg-${incident.department === 'production' ? 'orange' : 'green'}-100 text-${incident.department === 'production' ? 'orange' : 'green'}-800 text-xs font-medium rounded-full">
+                                    ${incident.department === 'production' ? 'Producción' : 'Almacén'}
+                                </span>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <p class="text-sm text-gray-600 mb-1"><strong>Reportado por:</strong> ${incident.operator}</p>
+                                <p class="text-gray-700">${incident.description}</p>
+                            </div>
+                            
+                            ${incident.images.length > 0 ? `
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4">
+                                ${incident.images.map(img => `
+                                    <div class="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                                        <img src="${img}" alt="Incident image" class="w-full h-full object-cover">
+                                    </div>
+                                `).join('')}
+                            </div>
+                            ` : ''}
+                            
+                            <div class="flex items-center text-sm text-gray-500 mb-4">
+                                <div class="h-8 w-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center mr-2">
+                                    <span class="text-white font-semibold">${incident.reportedBy.firstName.charAt(0)}${incident.reportedBy.lastName.charAt(0)}</span>
+                                </div>
+                                <span>${incident.reportedBy.firstName} ${incident.reportedBy.lastName}</span>
+                            </div>
+                            
+                            <div class="incident-actions">
+                                <button class="action-btn delete-btn" data-id="${incident.id}" onclick="deleteIncident(${incident.id})">
+                                    <i class="fas fa-trash mr-1"></i> Eliminar
+                                </button>
+                            </div>
+                        </div>
+                        `).join('')}
+                    </div>
+                    ` : `
+                    <div class="bg-white rounded-xl p-12 text-center shadow-lg">
+                        <i class="fas fa-list text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No hay incidencias registradas</h3>
+                        <p class="text-gray-600">Aún no se han reportado incidencias en el sistema.</p>
+                    </div>
+                    `}
+                </main>
+            </div>
+            `;
+        }
+
+        // Función global para eliminar incidencias
+        window.deleteIncident = function(incidentId) {
+            if (confirm('¿Estás seguro de que deseas eliminar esta incidencia? Esta acción no se puede deshacer.')) {
+                const initialLength = db.incidents.length;
+                db.incidents = db.incidents.filter(i => i.id != incidentId);
+                
+                if (db.incidents.length < initialLength) {
+                    alert('Incidencia eliminada correctamente');
+                    render();
+                } else {
+                    alert('No se pudo eliminar la incidencia');
+                }
+            }
+        };
+
+        // Event Listeners
+        function addEventListeners() {
+            // Login Form
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+
+            // Register Form
+            const registerForm = document.getElementById('registerForm');
+            if (registerForm) {
+                registerForm.addEventListener('submit', handleRegister);
+            }
+
+            // Register Button
+            const registerBtn = document.getElementById('registerBtn');
+            if (registerBtn) {
+                registerBtn.addEventListener('click', () => {
+                    state.currentPage = 'register';
+                    render();
+                });
+            }
+
+            // Back to Login
+            const backToLogin = document.getElementById('backToLogin');
+            if (backToLogin) {
+                backToLogin.addEventListener('click', () => {
+                    state.currentPage = 'login';
+                    render();
+                });
+            }
+
+            // Dashboard
+            const productionCard = document.getElementById('productionCard');
+            if (productionCard) {
+                productionCard.addEventListener('click', () => {
+                    state.selectedDepartment = 'production';
+                    state.currentPage = 'report';
+                    state.selectedCategory = '';
+                    state.customCategory = '';
+                    state.description = '';
+                    state.operator = '';
+                    state.images = [];
+                    render();
+                });
+            }
+
+            const warehouseCard = document.getElementById('warehouseCard');
+            if (warehouseCard) {
+                warehouseCard.addEventListener('click', () => {
+                    state.selectedDepartment = 'warehouse';
+                    state.currentPage = 'report';
+                    state.selectedCategory = '';
+                    state.customCategory = '';
+                    state.description = '';
+                    state.operator = '';
+                    state.images = [];
+                    render();
+                });
+            }
+
+            // Logout
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
+
+            // Back to Dashboard
+            const backToDashboard = document.getElementById('backToDashboard');
+            if (backToDashboard) {
+                backToDashboard.addEventListener('click', () => {
+                    state.currentPage = 'dashboard';
+                    render();
+                });
+            }
+
+            // Category selection
+            const categorySelect = document.getElementById('category');
+            if (categorySelect) {
+                categorySelect.addEventListener('change', (e) => {
+                    state.selectedCategory = e.target.value;
+                    if (e.target.value !== 'custom') {
+                        state.customCategory = '';
+                    }
+                    render();
+                });
+            }
+
+            // Custom category input
+            const customCategoryInput = document.getElementById('customCategory');
+            if (customCategoryInput) {
+                customCategoryInput.addEventListener('input', (e) => {
+                    state.customCategory = e.target.value;
+                });
+            }
+
+            // Operator input
+            const operatorInput = document.getElementById('operator');
+            if (operatorInput) {
+                operatorInput.addEventListener('input', (e) => {
+                    state.operator = e.target.value;
+                });
+            }
+
+            // Description input
+            const descriptionInput = document.getElementById('description');
+            if (descriptionInput) {
+                descriptionInput.addEventListener('input', (e) => {
+                    state.description = e.target.value;
+                });
+            }
+
+            // Upload images
+            const uploadBtn = document.getElementById('uploadBtn');
+            const imagesInput = document.getElementById('images');
+            const dragArea = document.querySelector('.drag-area');
+            
+            if (uploadBtn && imagesInput) {
+                uploadBtn.addEventListener('click', () => imagesInput.click());
+                
+                imagesInput.addEventListener('change', (e) => {
+                    handleImageUpload(e);
+                });
+            }
+
+            // Drag and drop functionality
+            if (dragArea) {
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    dragArea.addEventListener(eventName, preventDefaults, false);
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    dragArea.addEventListener(eventName, highlight, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    dragArea.addEventListener(eventName, unhighlight, false);
+                });
+
+                function highlight() {
+                    dragArea.style.borderColor = '#3b82f6';
+                    dragArea.style.backgroundColor = '#eff6ff';
+                }
+
+                function unhighlight() {
+                    dragArea.style.borderColor = '#d1d5db';
+                    dragArea.style.backgroundColor = '';
+                }
+
+                dragArea.addEventListener('drop', handleDrop, false);
+
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    if (files.length) {
+                        const event = { target: { files } };
+                        handleImageUpload(event);
+                    }
+                }
+            }
+
+            function handleImageUpload(e) {
+                const files = Array.from(e.target.files);
+                const fileReadPromises = files.slice(0, 5 - state.images.length).map(file => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => resolve(event.target.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(file);
+                    });
+                });
+
+                Promise.all(fileReadPromises).then(images => {
+                    state.images = [...state.images, ...images];
+                    render();
+                });
+            }
+
+            // Remove image
+            document.querySelectorAll('.remove-image').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.getAttribute('data-index'));
+                    state.images.splice(index, 1);
+                    render();
+                });
+            });
+
+            // Cancel report
+            const cancelReport = document.getElementById('cancelReport');
+            if (cancelReport) {
+                cancelReport.addEventListener('click', () => {
+                    state.currentPage = 'dashboard';
+                    state.selectedDepartment = null;
+                    state.selectedCategory = '';
+                    state.customCategory = '';
+                    state.description = '';
+                    state.operator = '';
+                    state.images = [];
+                    render();
+                });
+            }
+
+            // Submit incident
+            const incidentForm = document.getElementById('incidentForm');
+            if (incidentForm) {
+                incidentForm.addEventListener('submit', handleIncidentSubmit);
+            }
+
+            // Admin panel
+            const manageUsersBtn = document.getElementById('manageUsersBtn');
+            if (manageUsersBtn) {
+                manageUsersBtn.addEventListener('click', () => {
+                    state.currentPage = 'admin';
+                    render();
+                });
+            }
+
+            const viewIncidentsBtn = document.getElementById('viewIncidentsBtn');
+            if (viewIncidentsBtn) {
+                viewIncidentsBtn.addEventListener('click', () => {
+                    state.currentPage = 'viewIncidents';
+                    render();
+                });
+            }
+
+            // Back to dashboard from admin
+            const backToDashboardAdmin = document.getElementById('backToDashboardAdmin');
+            if (backToDashboardAdmin) {
+                backToDashboardAdmin.addEventListener('click', () => {
+                    state.currentPage = 'dashboard';
+                    render();
+                });
+            }
+
+            const backToDashboardIncidents = document.getElementById('backToDashboardIncidents');
+            if (backToDashboardIncidents) {
+                backToDashboardIncidents.addEventListener('click', () => {
+                    state.currentPage = 'dashboard';
+                    render();
+                });
+            }
+
+            // Approve/reject users
+            document.querySelectorAll('.approve-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const email = e.currentTarget.getAttribute('data-email');
+                    const user = db.pendingUsers.find(u => u.email === email);
+                    if (user) {
+                        db.users.push({ ...user, approved: true });
+                        db.pendingUsers = db.pendingUsers.filter(u => u.email !== email);
+                        alert('Usuario aprobado correctamente');
+                        render();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.reject-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const email = e.currentTarget.getAttribute('data-email');
+                    db.pendingUsers = db.pendingUsers.filter(u => u.email !== email);
+                    alert('Usuario rechazado');
+                    render();
+                });
+            });
+
+            // Manage categories
+            document.querySelectorAll('.remove-category').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const type = e.currentTarget.getAttribute('data-type');
+                    const index = parseInt(e.currentTarget.getAttribute('data-index'));
+                    
+                    if (type === 'production') {
+                        state.productionCategories.splice(index, 1);
+                    } else {
+                        state.warehouseCategories.splice(index, 1);
+                    }
+                    render();
+                });
+            });
+
+            const addProductionCategory = document.getElementById('addProductionCategory');
+            if (addProductionCategory) {
+                addProductionCategory.addEventListener('click', () => {
+                    const input = document.getElementById('newProductionCategory');
+                    const value = input.value.trim();
+                    if (value && !state.productionCategories.includes(value)) {
+                        state.productionCategories.push(value);
+                        input.value = '';
+                        render();
+                    }
+                });
+            }
+
+            const addWarehouseCategory = document.getElementById('addWarehouseCategory');
+            if (addWarehouseCategory) {
+                addWarehouseCategory.addEventListener('click', () => {
+                    const input = document.getElementById('newWarehouseCategory');
+                    const value = input.value.trim();
+                    if (value && !state.warehouseCategories.includes(value)) {
+                        state.warehouseCategories.push(value);
+                        input.value = '';
+                        render();
+                    }
+                });
+            }
+        }
+
+        // Handlers
+        function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Check if admin
+            if (password === db.adminPassword) {
+                state.currentUser = { email, firstName: 'Admin', lastName: 'System', department: 'admin' };
+                state.isAdmin = true;
+                state.currentPage = 'dashboard';
+                render();
+                return;
+            }
+
+            // Check if regular user
+            const user = [...db.users, ...db.pendingUsers].find(u => u.email === email && u.password === password);
+            if (user) {
+                if (db.users.includes(user)) {
+                    state.currentUser = user;
+                    state.isAdmin = false;
+                    state.currentPage = 'dashboard';
+                    render();
+                } else {
+                    alert('Tu cuenta está pendiente de aprobación por el administrador.');
+                }
+            } else {
+                alert('Credenciales incorrectas. Por favor, verifica tu correo y contraseña.');
+            }
+        }
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('regEmail').value;
+            const department = document.getElementById('department').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                alert('Las contraseñas no coinciden');
+                return;
+            }
+
+            if (db.users.some(u => u.email === email) || db.pendingUsers.some(u => u.email === email)) {
+                alert('Ya existe un usuario con este correo electrónico');
+                return;
+            }
+
+            const newUser = {
+                firstName,
+                lastName,
+                email,
+                department,
+                password,
+                createdAt: new Date()
+            };
+
+            db.pendingUsers.push(newUser);
+            alert('Registro completado. Tu cuenta está pendiente de aprobación por el administrador.');
+            state.currentPage = 'login';
+            render();
+        }
+
+        function handleLogout() {
+            state.currentPage = 'login';
+            state.currentUser = null;
+            state.isAdmin = false;
+            state.selectedDepartment = null;
+            state.selectedCategory = '';
+            state.customCategory = '';
+            state.description = '';
+            state.operator = '';
+            state.images = [];
+            render();
+        }
+
+        function handleIncidentSubmit(e) {
+            e.preventDefault();
+            
+            const categorySelect = document.getElementById('category');
+            const category = categorySelect ? categorySelect.value : state.selectedCategory;
+            const customCategoryInput = document.getElementById('customCategory');
+            const customCategory = customCategoryInput ? customCategoryInput.value : state.customCategory;
+            const descriptionInput = document.getElementById('description');
+            const description = descriptionInput ? descriptionInput.value : state.description;
+            const operatorInput = document.getElementById('operator');
+            const operator = operatorInput ? operatorInput.value : state.operator;
+            
+            const finalCategory = category === 'custom' ? customCategory : category;
+            
+            if (!finalCategory || !description || !operator) {
+                alert('Por favor, completa todos los campos obligatorios');
+                return;
+            }
+
+            const incident = {
+                id: Date.now(),
+                category: finalCategory,
+                description,
+                operator,
+                images: [...state.images],
+                department: state.selectedDepartment,
+                reportedBy: state.currentUser,
+                date: new Date(),
+                status: 'reported'
+            };
+
+            db.incidents.push(incident);
+
+            // Simulate email sending
+            const toEmails = state.selectedDepartment === 'production' 
+                ? ['dmartinez@plastiken.com', 'gmartinez@plastiken.com', 'rfita@plastiken.com']
+                : ['dmartinez@plastiken.com', 'gmartinez@plastiken.com'];
+            
+            console.log('Enviando correo a:', toEmails);
+            console.log('Asunto: Nueva incidencia reportada');
+            console.log('Cuerpo:', `Se ha reportado una nueva incidencia:\nCategoría: ${finalCategory}\nDepartamento: ${state.selectedDepartment === 'production' ? 'Producción' : 'Almacén'}\nOperario: ${operator}\nDescripción: ${description}\nReportado por: ${state.currentUser.firstName} ${state.currentUser.lastName}`);
+
+            alert('Incidencia reportada correctamente. Se ha enviado un correo a los responsables correspondientes.');
+            
+            // Reset form
+            state.currentPage = 'dashboard';
+            state.selectedDepartment = null;
+            state.selectedCategory = '';
+            state.customCategory = '';
+            state.description = '';
+            state.operator = '';
+            state.images = [];
+            render();
+        }
+
+        // Initialize
+        render();
+    </script>
+</body>
+</html>

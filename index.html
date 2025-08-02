@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Plastiken</title>
+    <title>Portal de Incidencias Plastiken</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -188,6 +188,65 @@
         .custom-input.active {
             display: block;
         }
+        .category-management {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .category-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .edit-btn, .save-btn, .cancel-btn {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            border: none;
+        }
+        .edit-btn {
+            background: #3b82f6;
+            color: white;
+        }
+        .save-btn {
+            background: #10b981;
+            color: white;
+        }
+        .cancel-btn {
+            background: #ef4444;
+            color: white;
+        }
+        .add-category {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .add-category input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+        }
+        .add-category button {
+            padding: 8px 12px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -231,7 +290,10 @@
                 'Otros (especificar)'
             ],
             incidents: [],
-            lastSync: new Date().toISOString()
+            lastSync: new Date().toISOString(),
+            // Correos asignados para cada departamento
+            productionEmails: ['dmartinez@plastiken.com', 'gmartinez@plastiken.com', 'rfita@plastiken.com'],
+            warehouseEmails: ['dmartinez@plastiken.com', 'gmartinez@plastiken.com']
         };
 
         // Estado local de la aplicación
@@ -246,7 +308,14 @@
             operator: '',
             images: [],
             notificationCount: 0,
-            activeAccordion: null
+            activeAccordion: null,
+            editingCategory: null,
+            newCategory: '',
+            // Estado para edición de categorías
+            editingCategories: {
+                production: [...cloudDB.productionCategories],
+                warehouse: [...cloudDB.warehouseCategories]
+            }
         };
 
         // Función para enviar datos al servidor
@@ -294,6 +363,25 @@
                     cloudDB.lastSync = new Date().toISOString();
                     resolve(true);
                 }, 500);
+            });
+        }
+
+        // Función para enviar correo (simulación)
+        function sendEmail(incident) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    const emails = incident.department === 'production' 
+                        ? cloudDB.productionEmails 
+                        : cloudDB.warehouseEmails;
+                    
+                    console.log('Enviando correo a:', emails);
+                    console.log('Asunto: Nueva incidencia reportada');
+                    console.log('Cuerpo:', `Se ha reportado una nueva incidencia:\nCategoría: ${incident.category}\nDepartamento: ${incident.department === 'production' ? 'Producción' : 'Almacén'}\nOperario: ${incident.operator}\nDescripción: ${incident.description}\nReportado por: ${incident.reportedBy.firstName} ${incident.reportedBy.lastName}`);
+                    
+                    // Simular envío de correo desde el dispositivo
+                    alert(`Correo enviado correctamente a: ${emails.join(', ')}`);
+                    resolve(true);
+                }, 1000);
             });
         }
 
@@ -810,24 +898,93 @@
                     `}
 
                     <!-- Category Management -->
-                    <div class="bg-white rounded-xl p-6 shadow-lg">
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                            <i class="fas fa-cog mr-3 text-blue-600"></i> Gestión de Categorías
+                        </h3>
+                        
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-2xl font-bold text-gray-900 flex items-center">
-                                <i class="fas fa-cog mr-3 text-blue-600"></i> Gestión de Categorías
-                            </h3>
+                            <h4 class="text-xl font-semibold text-gray-800">Incidencias en Producción</h4>
                             <div class="flex items-center">
                                 <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
                                 <span class="text-sm text-green-600">Sincronizado</span>
                             </div>
                         </div>
                         
-                        <p class="text-sm text-gray-600 mb-4">Las categorías están predefinidas según los requerimientos del cliente.</p>
+                        <div class="category-management">
+                            ${state.editingCategories.production.map((category, index) => `
+                                <div class="category-item" data-index="${index}" data-type="production">
+                                    ${state.editingCategory === `production-${index}` ? `
+                                        <input type="text" class="edit-category-input w-full px-2 py-1 border border-gray-300 rounded" 
+                                               value="${category}" data-index="${index}" data-type="production">
+                                        <div class="category-actions">
+                                            <button class="save-btn save-category" data-index="${index}" data-type="production">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                            <button class="cancel-btn cancel-edit" data-index="${index}" data-type="production">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    ` : `
+                                        <span>${category}</span>
+                                        <div class="category-actions">
+                                            <button class="edit-btn edit-category" data-index="${index}" data-type="production">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    `}
+                                </div>
+                            `).join('')}
+                            
+                            <div class="add-category">
+                                <input type="text" id="newProductionCategory" placeholder="Nueva categoría...">
+                                <button id="addProductionCategory"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
                         
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                            <p class="text-sm text-yellow-800">
-                                <i class="fas fa-info-circle mr-2"></i>
-                                Las categorías de incidencias están configuradas según los requerimientos específicos de producción y almacén.
-                            </p>
+                        <div class="flex justify-between items-center mb-6 mt-8">
+                            <h4 class="text-xl font-semibold text-gray-800">Incidencias en Almacén</h4>
+                            <div class="flex items-center">
+                                <i class="fas fa-sync-alt sync-icon mr-2 text-green-500"></i>
+                                <span class="text-sm text-green-600">Sincronizado</span>
+                            </div>
+                        </div>
+                        
+                        <div class="category-management">
+                            ${state.editingCategories.warehouse.map((category, index) => `
+                                <div class="category-item" data-index="${index}" data-type="warehouse">
+                                    ${state.editingCategory === `warehouse-${index}` ? `
+                                        <input type="text" class="edit-category-input w-full px-2 py-1 border border-gray-300 rounded" 
+                                               value="${category}" data-index="${index}" data-type="warehouse">
+                                        <div class="category-actions">
+                                            <button class="save-btn save-category" data-index="${index}" data-type="warehouse">
+                                                <i class="fas fa-save"></i>
+                                            </button>
+                                            <button class="cancel-btn cancel-edit" data-index="${index}" data-type="warehouse">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    ` : `
+                                        <span>${category}</span>
+                                        <div class="category-actions">
+                                            <button class="edit-btn edit-category" data-index="${index}" data-type="warehouse">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </div>
+                                    `}
+                                </div>
+                            `).join('')}
+                            
+                            <div class="add-category">
+                                <input type="text" id="newWarehouseCategory" placeholder="Nueva categoría...">
+                                <button id="addWarehouseCategory"><i class="fas fa-plus"></i></button>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button id="saveCategories" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                                <i class="fas fa-save mr-2"></i> Guardar Cambios
+                            </button>
                         </div>
                     </div>
                 </main>
@@ -1233,6 +1390,92 @@
                 });
             });
 
+            // Edit category
+            document.querySelectorAll('.edit-category').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = e.currentTarget.getAttribute('data-index');
+                    const type = e.currentTarget.getAttribute('data-type');
+                    state.editingCategory = `${type}-${index}`;
+                    render();
+                });
+            });
+
+            // Save category
+            document.querySelectorAll('.save-category').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = e.currentTarget.getAttribute('data-index');
+                    const type = e.currentTarget.getAttribute('data-type');
+                    const input = document.querySelector(`.edit-category-input[data-index="${index}"][data-type="${type}"]`);
+                    const newValue = input.value.trim();
+                    
+                    if (newValue) {
+                        state.editingCategories[type][index] = newValue;
+                        state.editingCategory = null;
+                        render();
+                    } else {
+                        alert('La categoría no puede estar vacía');
+                    }
+                });
+            });
+
+            // Cancel edit
+            document.querySelectorAll('.cancel-edit').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    state.editingCategory = null;
+                    render();
+                });
+            });
+
+            // Add new category
+            const addProductionCategory = document.getElementById('addProductionCategory');
+            if (addProductionCategory) {
+                addProductionCategory.addEventListener('click', () => {
+                    const input = document.getElementById('newProductionCategory');
+                    const value = input.value.trim();
+                    if (value) {
+                        if (!state.editingCategories.production.includes(value)) {
+                            state.editingCategories.production.push(value);
+                            input.value = '';
+                            render();
+                        } else {
+                            alert('Esta categoría ya existe');
+                        }
+                    } else {
+                        alert('Por favor, introduce un nombre para la categoría');
+                    }
+                });
+            }
+
+            const addWarehouseCategory = document.getElementById('addWarehouseCategory');
+            if (addWarehouseCategory) {
+                addWarehouseCategory.addEventListener('click', () => {
+                    const input = document.getElementById('newWarehouseCategory');
+                    const value = input.value.trim();
+                    if (value) {
+                        if (!state.editingCategories.warehouse.includes(value)) {
+                            state.editingCategories.warehouse.push(value);
+                            input.value = '';
+                            render();
+                        } else {
+                            alert('Esta categoría ya existe');
+                        }
+                    } else {
+                        alert('Por favor, introduce un nombre para la categoría');
+                    }
+                });
+            }
+
+            // Save all categories
+            const saveCategories = document.getElementById('saveCategories');
+            if (saveCategories) {
+                saveCategories.addEventListener('click', () => {
+                    // Update the original categories
+                    cloudDB.productionCategories = [...state.editingCategories.production];
+                    cloudDB.warehouseCategories = [...state.editingCategories.warehouse];
+                    alert('Categorías guardadas correctamente y sincronizadas con todos los dispositivos');
+                });
+            }
+
             // Delete incident
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', async function() {
@@ -1356,6 +1599,7 @@
             state.images = [];
             state.notificationCount = 0;
             state.activeAccordion = null;
+            state.editingCategory = null;
             render();
         }
 
@@ -1396,28 +1640,23 @@
                 status: 'reported'
             };
 
+            // Send to server and email
             sendToServer('incident', incident).then(() => {
-                // Simulate email sending
-                const toEmails = state.selectedDepartment === 'production' 
-                    ? ['dmartinez@plastiken.com', 'gmartinez@plastiken.com', 'rfita@plastiken.com']
-                    : ['dmartinez@plastiken.com', 'gmartinez@plastiken.com'];
-                
-                console.log('Enviando correo a:', toEmails);
-                console.log('Asunto: Nueva incidencia reportada');
-                console.log('Cuerpo:', `Se ha reportado una nueva incidencia:\nCategoría: ${finalCategory}\nDepartamento: ${state.selectedDepartment === 'production' ? 'Producción' : 'Almacén'}\nOperario: ${operator}\nDescripción: ${description}\nReportado por: ${state.currentUser.firstName} ${state.currentUser.lastName}`);
-
-                alert('Incidencia reportada correctamente. Se ha enviado un correo a los responsables correspondientes y se ha sincronizado con todos los dispositivos.');
-                
-                // Reset form
-                state.currentPage = 'dashboard';
-                state.selectedDepartment = null;
-                state.selectedCategory = '';
-                state.customCategory = '';
-                state.description = '';
-                state.operator = '';
-                state.images = [];
-                state.activeAccordion = null;
-                render();
+                // Send email from the device
+                sendEmail(incident).then(() => {
+                    alert('Incidencia reportada correctamente. Se ha enviado un correo a los responsables correspondientes y se ha sincronizado con todos los dispositivos.');
+                    
+                    // Reset form
+                    state.currentPage = 'dashboard';
+                    state.selectedDepartment = null;
+                    state.selectedCategory = '';
+                    state.customCategory = '';
+                    state.description = '';
+                    state.operator = '';
+                    state.images = [];
+                    state.activeAccordion = null;
+                    render();
+                });
             });
         }
 
